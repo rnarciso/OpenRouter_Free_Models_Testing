@@ -10,7 +10,7 @@ import os
 import re
 import time
 import json
-import sqlite3
+# import sqlite3 # Removed as database.py now handles DB choice
 from flask import Flask, render_template, jsonify, request, Response
 from openrouter_client import OpenRouterClient
 import database  # Import the database module
@@ -363,20 +363,12 @@ def update_problem():
 def get_results():
     """Get all saved test results from the database."""
     try:
-        conn = sqlite3.connect('results.db')
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
-        
-        c.execute("SELECT * FROM results ORDER BY timestamp DESC")
-        results = c.fetchall()
-        
-        # Convert rows to dictionaries
-        results_list = [dict(row) for row in results]
-        
-        conn.close()
+        results_list = database.get_all_results()
         return jsonify(results_list)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        # Log the exception for more detailed debugging if needed
+        app.logger.error(f"Error fetching results: {e}")
+        return jsonify({"error": "An error occurred while fetching results."}), 500
 
 if __name__ == '__main__':
     # Run the Flask app
