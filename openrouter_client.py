@@ -4,6 +4,12 @@ import re
 import os
 import json
 from datetime import datetime, timedelta
+import logging
+
+# Set up a basic logger
+logger = logging.getLogger(__name__)
+# You might want to configure the logger further (e.g., level, handler)
+# in a central place in your application if needed. For now, this is basic.
 
 class OpenRouterClient:
     """Client for interacting with the OpenRouter API"""
@@ -155,63 +161,38 @@ class OpenRouterClient:
                 "error": f"Unexpected Error: {str(e)}"
             }
     
-    def evaluate_response(self, response_text, problem_type="geometry_height"):
-        """Evaluate if the response contains the correct answer based on problem type"""
-        
+    def evaluate_response(self, response_text, expected_answer):
+        """
+        Evaluate if the response contains the expected_answer.
+        Searches for the expected_answer as a whole word, case-insensitively.
+        """
         # Ensure response_text is a string
         if not isinstance(response_text, str):
             print(f"Warning: evaluate_response received non-string input: {type(response_text)}")
             return False, None
 
-        if problem_type == "geometry_height":
-            # Look for 2.4 or 2,4 possibly followed by 'm' or units like 'metros'
-            # Allows for variations in spacing and phrasing.
-            patterns = [
-                r'2[,.]4\s*m(?:etros)?',  # Matches "2,4m", "2.4m", "2,4 m", "2.4 metros" etc.
-                r'(?:é|is|equals|=)\s*2[,.]4', # Matches "= 2,4", "é 2.4" etc.
-                r'\b2[,.]4\b' # Matches the number 2,4 or 2.4 as a whole word
-            ]
-            expected_value = "2.4" # Canonical value for comparison/logging
-
-            print(f"Evaluating response for geometry height (expected ~{expected_value})...") # Debugging print
-            for pattern in patterns:
-                match = re.search(pattern, response_text, re.IGNORECASE)
-                if match:
-                    print(f"Found match with pattern '{pattern}': {match.group(0)}") # Debugging print
-                    # Simple check: return True if any pattern matches
-                    return True, match.group(0) # Return the matched text
-
-            print("No matching pattern found for geometry height.") # Debugging print
+        if not isinstance(expected_answer, str):
+            logger.warning(f"evaluate_response received non-string expected_answer: {type(expected_answer)}")
             return False, None
 
-        elif problem_type == "xy":
-            # Look for xy = 12 or similar patterns
-            patterns = [
-                r'xy\s*=\s*12',
-                r'x\s*\*\s*y\s*=\s*12',
-                r'product\s*(?:of\s*x\s*and\s*y|xy)\s*(?:is|equals|=)\s*12',
-                r'value\s*of\s*xy\s*(?:is|equals|=)\s*12',
-                r'xy\s*(?:is|equals)\s*12',
-                r'\b12\b'  # Just the number 12 as a whole word
-            ]
-            expected_value = "12"
+        # Ensure expected_answer is treated as a string for re.escape
+        expected_answer_str = str(expected_answer)
+        logger.debug(f"Evaluating response. Expected answer: '{expected_answer_str}'. Response text (first 100 chars): '{response_text[:100]}'")
 
-            print(f"Evaluating response for xy problem (expected {expected_value})...") # Debugging print
-            for pattern in patterns:
-                match = re.search(pattern, response_text, re.IGNORECASE)
-                if match:
-                    print(f"Found match with pattern '{pattern}': {match.group(0)}") # Debugging print
-                    return True, match.group(0)
+        # Escape the expected_answer for use in regex and ensure it's treated as a whole word
+        # \b matches word boundaries
+        # re.escape handles any special characters in expected_answer
+        pattern = r'\b' + re.escape(expected_answer_str) + r'\b'
 
-            print("No matching pattern found for xy problem.") # Debugging print
-            return False, None
+        match = re.search(pattern, response_text, re.IGNORECASE)
 
-        # Add other problem types here if needed
-        # elif problem_type == "another_type":
-        #    ...
-
+        if match:
+            logger.info(f"Found expected answer '{expected_answer_str}' in response: '{match.group(0)}'")
+            return True, match.group(0)
         else:
-            print(f"Warning: Unknown problem_type '{problem_type}' in evaluate_response.")
+            # The previous secondary check for numeric was a pass-through, keeping it that way.
+            # If more sophisticated numeric matching is needed, it would go here.
+            logger.info(f"Expected answer '{expected_answer_str}' not found in response.")
             return False, None
 
 def test_openrouter_client():
@@ -244,8 +225,10 @@ def test_openrouter_client():
         print(f"Response: {result['response_text'][:100]}...")
         
         # Evaluate the response
-        is_correct, found_answer = client.evaluate_response(result["response_text"])
-        print(f"Correct answer found: {is_correct}")
+        # For testing, let's assume the expected answer for the default problem is "12"
+        expected_test_answer = "12"
+        is_correct, found_answer = client.evaluate_response(result["response_text"], expected_test_answer)
+        print(f"Correct answer '{expected_test_answer}' found: {is_correct}")
         if found_answer:
             print(f"Found answer: {found_answer}")
 

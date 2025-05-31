@@ -24,9 +24,12 @@
             <div class="container">
                 <p>This system tests AI models on the following mathematical problem:</p>
                 <div class="math-problem">
-                    <textarea id="problem-text" rows="4" style="width:100%;">If x² + y² = 25 and x + y = 7, what is the value of xy?</textarea>
-                    <button id="update-problem" class="btn primary">Update Problem</button>
-                    <p class="solution-note">The correct answer is 12.</p>
+                    <label for="problem-text" style="display: block; margin-bottom: 5px;">Problem:</label>
+                    <textarea id="problem-text" rows="4" style="width:100%;">{{ current_problem }}</textarea>
+                    <label for="correct-answer-text" style="display: block; margin-top: 10px; margin-bottom: 5px;">Correct Answer:</label>
+                    <input type="text" id="correct-answer-text" style="width:100%; margin-top: 5px;" value="{{ current_correct_answer }}">
+                    <button id="update-problem" class="btn primary" style="margin-top: 10px;">Update Problem & Answer</button>
+                    <!-- <p class="solution-note">The correct answer is 12.</p> -->
                 </div>
                 <p>Each model will be evaluated based on:</p>
                 <ul>
@@ -65,12 +68,12 @@
                     <table id="results-table">
                         <thead>
                             <tr>
-                                <th>Model Name</th>
-                                <th>Correct</th>
-                                <th>Response Time (s)</th>
-                                <th>Token Usage</th>
-                                <th>Answer Found</th>
-                                <th>Score</th>
+                                <th class="sortable-header" data-column="model_name" data-type="string">Model Name</th>
+                                <th>Correct</th> <!-- Not making 'Correct' sortable for now -->
+                                <th class="sortable-header" data-column="response_time" data-type="number">Response Time (s)</th>
+                                <th class="sortable-header" data-column="token_usage" data-type="number">Token Usage</th>
+                                <th>Answer Found</th> <!-- Not making 'Answer Found' sortable for now -->
+                                <th class="sortable-header" data-column="score" data-type="number">Score</th>
                             </tr>
                         </thead>
                         <tbody id="results-body">
@@ -79,6 +82,20 @@
                     </table>
                     <p id="no-results-message">No test results yet. Run a test to see results.</p>
                 </div>
+            </div>
+        </section>
+
+        <section id="about">
+            <h2>About This Application</h2>
+            <div class="container">
+                <p>This application allows testing and evaluation of various AI models using the OpenRouter API.</p>
+                <p>Key features include:</p>
+                <ul>
+                    <li>Comparing model performance on specific problems.</li>
+                    <li>Viewing detailed model responses.</li>
+                    <li>Tracking metrics like response time and token usage.</li>
+                </ul>
+                <p>This system is designed to help researchers and developers understand the capabilities and characteristics of different AI models.</p>
             </div>
         </section>
     </main>
@@ -93,24 +110,36 @@
     <script>
         document.getElementById('update-problem').addEventListener('click', function() {
             const problemText = document.getElementById('problem-text').value;
+            const correctAnswerText = document.getElementById('correct-answer-text').value;
+
+            if (!problemText.trim() || !correctAnswerText.trim()) {
+                alert('Both problem text and correct answer are required.');
+                return;
+            }
+
             fetch('/api/problem', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ problem_text: problemText })
+                body: JSON.stringify({
+                    problem_text: problemText,
+                    correct_answer: correctAnswerText
+                })
             })
             .then(response => response.json())
             .then(data => {
-                if (data.message) {
-                    alert('Problem updated successfully!');
+                if (data.message && data.current_problem && data.current_correct_answer) {
+                    alert('Problem and answer updated successfully!');
+                    document.getElementById('problem-text').value = data.current_problem;
+                    document.getElementById('correct-answer-text').value = data.current_correct_answer;
                 } else {
-                    alert('Failed to update problem: ' + (data.error || 'Unknown error'));
+                    alert('Failed to update problem and answer: ' + (data.error || 'Unknown error'));
                 }
             })
             .catch(error => {
-                console.error('Error updating problem:', error);
-                alert('Failed to update problem. Please try again.');
+                console.error('Error updating problem and answer:', error);
+                alert('Failed to update problem and answer. Please try again.');
             });
         });
     </script>
