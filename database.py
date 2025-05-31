@@ -37,7 +37,8 @@ def init_db():
 
         conn.commit()
     except psycopg2.Error as e:
-        print(f"Error initializing database: {e}")
+        import logging
+        logging.error(f"Erro ao inicializar o banco de dados: {e}")
     finally:
         if c:
             c.close()
