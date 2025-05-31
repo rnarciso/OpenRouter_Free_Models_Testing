@@ -13,37 +13,29 @@ DB_PORT = "5432"
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 def init_db():
-    with psycopg2.connect(DATABASE_URL) as conn:
-        with conn.cursor() as c:
-        conn = psycopg2.connect(DATABASE_URL)
-        c = conn.cursor()
-
-        # Create results table
-        c.execute('''CREATE TABLE IF NOT EXISTS results (
-            id SERIAL PRIMARY KEY,
-            model_id TEXT NOT NULL,
-            model_name TEXT NOT NULL,
-            prompt TEXT NOT NULL,
-            response_text TEXT NOT NULL,
-            is_correct BOOLEAN NOT NULL,
-            answer_found TEXT,
-            response_time REAL NOT NULL,
-            prompt_tokens INTEGER NOT NULL,
-            completion_tokens INTEGER NOT NULL,
-            total_tokens INTEGER NOT NULL,
-            score INTEGER NOT NULL,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )''')
-
-        conn.commit()
+    try:
+        with psycopg2.connect(DATABASE_URL) as conn:
+            with conn.cursor() as c:
+                # Create results table
+                c.execute('''CREATE TABLE IF NOT EXISTS results (
+                    id SERIAL PRIMARY KEY,
+                    model_id TEXT NOT NULL,
+                    model_name TEXT NOT NULL,
+                    prompt TEXT NOT NULL,
+                    response_text TEXT NOT NULL,
+                    is_correct BOOLEAN NOT NULL,
+                    answer_found TEXT,
+                    response_time REAL NOT NULL,
+                    prompt_tokens INTEGER NOT NULL,
+                    completion_tokens INTEGER NOT NULL,
+                    total_tokens INTEGER NOT NULL,
+                    score INTEGER NOT NULL,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )''')
+                conn.commit()
     except psycopg2.Error as e:
         import logging
         logging.error(f"Erro ao inicializar o banco de dados: {e}")
-    finally:
-        if c:
-            c.close()
-        if conn:
-            conn.close()
 
 def save_result(result):
     conn = None  # Initialize conn to None
