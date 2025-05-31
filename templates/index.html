@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenRouter Model Testing System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>OpenRouter Model Testing System</h1>
+        <p class="subtitle">Evaluate and compare AI model performance on mathematical reasoning tasks</p>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="#about">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="problem-description">
+            <h2>Math Problem Test</h2>
+            <div class="container">
+                <p>This system tests AI models on the following mathematical problem:</p>
+                <div class="math-problem">
+                    <textarea id="problem-text" rows="4" style="width:100%;">If x² + y² = 25 and x + y = 7, what is the value of xy?</textarea>
+                    <button id="update-problem" class="btn primary">Update Problem</button>
+                    <p class="solution-note">The correct answer is 12.</p>
+                </div>
+                <p>Each model will be evaluated based on:</p>
+                <ul>
+                    <li><strong>Correctness</strong> (70 points): Whether the model provides the correct answer</li>
+                    <li><strong>Response Time</strong> (20 points): How quickly the model responds</li>
+                    <li><strong>Token Efficiency</strong> (10 points): How efficiently the model uses tokens</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="control-panel">
+            <h2>Test Controls</h2>
+            <div class="container">
+                <div class="control-group">
+                    <label for="model-select">Select Model:</label>
+                    <select id="model-select">
+                        <option value="">Loading models...</option>
+                    </select>
+                    <button id="test-single-model" class="btn primary">Test Selected Model</button>
+                </div>
+                <div class="control-group">
+                    <button id="test-all-models" class="btn secondary">Test All Free Models</button>
+                    <button id="clear-results" class="btn danger">Clear Results</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="results-section">
+            <h2>Test Results</h2>
+            <div class="container">
+                <div id="loading-indicator" class="hidden">
+                    <div class="spinner"></div>
+                    <p>Testing models, please wait...</p>
+                </div>
+                <div id="results-container">
+                    <table id="results-table">
+                        <thead>
+                            <tr>
+                                <th>Model Name</th>
+                                <th>Correct</th>
+                                <th>Response Time (s)</th>
+                                <th>Token Usage</th>
+                                <th>Answer Found</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body">
+                            <!-- Results will be populated here by JavaScript -->
+                        </tbody>
+                    </table>
+                    <p id="no-results-message">No test results yet. Run a test to see results.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 OpenRouter Model Testing System</p>
+    </footer>
+
+    <!-- Include marked.js for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        document.getElementById('update-problem').addEventListener('click', function() {
+            const problemText = document.getElementById('problem-text').value;
+            fetch('/api/problem', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ problem_text: problemText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert('Problem updated successfully!');
+                } else {
+                    alert('Failed to update problem: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error updating problem:', error);
+                alert('Failed to update problem. Please try again.');
+            });
+        });
+    </script>
+
+    <!-- Modal for displaying full response -->
+    <div id="response-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Full Model Response</h2>
+            <div id="modal-response-text" class="markdown-content"></div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,214 @@
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5002
+ * Running on http://192.168.1.191:5002
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 518-837-803
+127.0.0.1 - - [31/May/2025 12:51:15] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/May/2025 12:51:15] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [31/May/2025 12:51:15] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [31/May/2025 12:51:16] "GET /api/models HTTP/1.1" 200 -
+Using cached models list
+Attempting to send problem to model: sarvamai/sarvam-m:free
+Received response status code: 200 for model: sarvamai/sarvam-m:free
+Successfully received and parsed JSON response for model: sarvamai/sarvam-m:free
+Raw response data for model sarvamai/sarvam-m:free: {
+  "id": "gen-1748706689-AOl45LvsRyzm0qoJla5l",
+  "provider": "Chutes",
+  "model": "sarvamai/sarvam-m:free",
+  "object": "chat.completion",
+  "created": 1748706689,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Okay, so I need to find the value of xy given that x squared plus y squared equals 25 and x plus y equals 7. Hmm, let's see. I remember there are some algebraic identities related to squares. Oh right, the square of a sum. Like (x + y) squared equals x squared plus 2xy plus y squared. That might help here.\n\nSo if I take (x + y)\u00b2 and plug in the known values. The problem says x + y is 7, so (7) squared is 49. On the other hand, expanding (x + y)\u00b2 gives me x\u00b2 + 2xy + y\u00b2. And from the first equation, x\u00b2 + y\u00b2 is 25. So substituting that in, the equation becomes 25 + 2xy = 49.\n\nNow I can solve for xy. Subtract 25 from both sides: 2xy = 49 - 25, which is 24. Then divide both sides by 2, so xy = 12. Let me check that again to make sure I didn't make a mistake.\n\nStarting over: (x + y)\u00b2 = x\u00b2 + 2xy + y\u00b2. We know x + y = 7, so 7\u00b2 = x\u00b2 + y\u00b2 + 2xy. But x\u00b2 + y\u00b2 is given as 25. Therefore, 49 = 25 + 2xy. Subtract 25: 24 = 2xy. Divide by 2: xy = 12. Yep, that seems right. I think that's the answer.\n</think>\n\nTo find the value of \\( xy \\) given the equations \\( x^2 + y^2 = 25 \\) and \\( x + y = 7 \\):\n\n1. Start with the algebraic identity:\n   \\[\n   (x + y)^2 = x^2 + 2xy + y^2\n   \\]\n\n2. Substitute \\( x + y = 7 \\):\n   \\[\n   7^2 = x^2 + 2xy + y^2 \\implies 49 = x^2 + 2xy + y^2\n   \\]\n\n3. Use \\( x^2 + y^2 = 25 \\) to simplify:\n   \\[\n   49 = 25 + 2xy\n   \\]\n\n4. Solve for \\( xy \\):\n   \\[\n   2xy = 49 - 25 \\implies 2xy = 24 \\implies xy = 12\n   \\]\n\n**Final Answer:**  \nThe value of \\( xy \\) is \\(\\boxed{12}\\).",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 76,
+    "completion_tokens": 579,
+    "total_tokens": 655,
+    "prompt_tokens_details": null
+  }
+}
+127.0.0.1 - - [31/May/2025 12:51:37] "POST /api/test HTTP/1.1" 200 -
+DEBUG: Result from send_math_problem for sarvamai/sarvam-m:free: {'response_text': "Okay, so I need to find the value of xy given that x squared plus y squared equals 25 and x plus y equals 7. Hmm, let's see. I remember there are some algebraic identities related to squares. Oh right, the square of a sum. Like (x + y) squared equals x squared plus 2xy plus y squared. That might help here.\n\nSo if I take (x + y)² and plug in the known values. The problem says x + y is 7, so (7) squared is 49. On the other hand, expanding (x + y)² gives me x² + 2xy + y². And from the first equation, x² + y² is 25. So substituting that in, the equation becomes 25 + 2xy = 49.\n\nNow I can solve for xy. Subtract 25 from both sides: 2xy = 49 - 25, which is 24. Then divide both sides by 2, so xy = 12. Let me check that again to make sure I didn't make a mistake.\n\nStarting over: (x + y)² = x² + 2xy + y². We know x + y = 7, so 7² = x² + y² + 2xy. But x² + y² is given as 25. Therefore, 49 = 25 + 2xy. Subtract 25: 24 = 2xy. Divide by 2: xy = 12. Yep, that seems right. I think that's the answer.\n</think>\n\nTo find the value of \\( xy \\) given the equations \\( x^2 + y^2 = 25 \\) and \\( x + y = 7 \\):\n\n1. Start with the algebraic identity:\n   \\[\n   (x + y)^2 = x^2 + 2xy + y^2\n   \\]\n\n2. Substitute \\( x + y = 7 \\):\n   \\[\n   7^2 = x^2 + 2xy + y^2 \\implies 49 = x^2 + 2xy + y^2\n   \\]\n\n3. Use \\( x^2 + y^2 = 25 \\) to simplify:\n   \\[\n   49 = 25 + 2xy\n   \\]\n\n4. Solve for \\( xy \\):\n   \\[\n   2xy = 49 - 25 \\implies 2xy = 24 \\implies xy = 12\n   \\]\n\n**Final Answer:**  \nThe value of \\( xy \\) is \\(\\boxed{12}\\).", 'response_time_seconds': 8.580662965774536, 'prompt_tokens': 76, 'completion_tokens': 579, 'total_tokens': 655}
+DEBUG: Result from send_math_problem for sarvamai/sarvam-m:free: {'response_text': "Okay, so I need to find the value of xy given that x squared plus y squared equals 25 and x plus y equals 7. Hmm, let's see. I remember there are some algebraic identities related to squares. Oh right, the square of a sum. Like (x + y) squared equals x squared plus 2xy plus y squared. That might help here.\n\nSo if I take (x + y)² and plug in the known values. The problem says x + y is 7, so (7) squared is 49. On the other hand, expanding (x + y)² gives me x² + 2xy + y². And from the first equation, x² + y² is 25. So substituting that in, the equation becomes 25 + 2xy = 49.\n\nNow I can solve for xy. Subtract 25 from both sides: 2xy = 49 - 25, which is 24. Then divide both sides by 2, so xy = 12. Let me check that again to make sure I didn't make a mistake.\n\nStarting over: (x + y)² = x² + 2xy + y². We know x + y = 7, so 7² = x² + y² + 2xy. But x² + y² is given as 25. Therefore, 49 = 25 + 2xy. Subtract 25: 24 = 2xy. Divide by 2: xy = 12. Yep, that seems right. I think that's the answer.\n</think>\n\nTo find the value of \\( xy \\) given the equations \\( x^2 + y^2 = 25 \\) and \\( x + y = 7 \\):\n\n1. Start with the algebraic identity:\n   \\[\n   (x + y)^2 = x^2 + 2xy + y^2\n   \\]\n\n2. Substitute \\( x + y = 7 \\):\n   \\[\n   7^2 = x^2 + 2xy + y^2 \\implies 49 = x^2 + 2xy + y^2\n   \\]\n\n3. Use \\( x^2 + y^2 = 25 \\) to simplify:\n   \\[\n   49 = 25 + 2xy\n   \\]\n\n4. Solve for \\( xy \\):\n   \\[\n   2xy = 49 - 25 \\implies 2xy = 24 \\implies xy = 12\n   \\]\n\n**Final Answer:**  \nThe value of \\( xy \\) is \\(\\boxed{12}\\).", 'response_time_seconds': 8.580662965774536, 'prompt_tokens': 76, 'completion_tokens': 579, 'total_tokens': 655}
+Evaluating response for xy problem (expected 12)...
+Found match with pattern 'xy\s*=\s*12': xy = 12
+Using cached models list
+Attempting to send problem to model: mistralai/devstral-small:free
+Received response status code: 200 for model: mistralai/devstral-small:free
+Successfully received and parsed JSON response for model: mistralai/devstral-small:free
+Raw response data for model mistralai/devstral-small:free: {
+  "id": "gen-1748706704-O0nfFq8aObEqyMriKhOB",
+  "provider": "Chutes",
+  "model": "mistralai/devstral-small:free",
+  "object": "chat.completion",
+  "created": 1748706704,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "To find the value of xy, we can manipulate the given equations.\n\nWe start with the expanded form of the square of the sum (x + y)\u00b2:\n(x + y)\u00b2 = x\u00b2 + 2xy + y\u00b2\n\nWe know that (x + y)\u00b2 = 7\u00b2 = 49 and x\u00b2 + y\u00b2 = 25. Plugging these values into the equation above, we get:\n49 = 25 + 2xy\n\nNow, we can solve for xy:\n2xy = 49 - 25\n2xy = 24\nxy = 24 / 2\nxy = 12\n\nSo, the value of xy is 12.",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 52,
+    "completion_tokens": 154,
+    "total_tokens": 206
+  }
+}
+127.0.0.1 - - [31/May/2025 12:51:46] "POST /api/test HTTP/1.1" 200 -
+DEBUG: Result from send_math_problem for mistralai/devstral-small:free: {'response_text': 'To find the value of xy, we can manipulate the given equations.\n\nWe start with the expanded form of the square of the sum (x + y)²:\n(x + y)² = x² + 2xy + y²\n\nWe know that (x + y)² = 7² = 49 and x² + y² = 25. Plugging these values into the equation above, we get:\n49 = 25 + 2xy\n\nNow, we can solve for xy:\n2xy = 49 - 25\n2xy = 24\nxy = 24 / 2\nxy = 12\n\nSo, the value of xy is 12.', 'response_time_seconds': 2.947920322418213, 'prompt_tokens': 52, 'completion_tokens': 154, 'total_tokens': 206}
+DEBUG: Result from send_math_problem for mistralai/devstral-small:free: {'response_text': 'To find the value of xy, we can manipulate the given equations.\n\nWe start with the expanded form of the square of the sum (x + y)²:\n(x + y)² = x² + 2xy + y²\n\nWe know that (x + y)² = 7² = 49 and x² + y² = 25. Plugging these values into the equation above, we get:\n49 = 25 + 2xy\n\nNow, we can solve for xy:\n2xy = 49 - 25\n2xy = 24\nxy = 24 / 2\nxy = 12\n\nSo, the value of xy is 12.', 'response_time_seconds': 2.947920322418213, 'prompt_tokens': 52, 'completion_tokens': 154, 'total_tokens': 206}
+Evaluating response for xy problem (expected 12)...
+Found match with pattern 'xy\s*=\s*12': xy = 12
+Using cached models list
+Attempting to send problem to model: google/gemma-3n-e4b-it:free
+Received response status code: 400 for model: google/gemma-3n-e4b-it:free
+Error Response Text: {"error":{"message":"Provider returned error","code":400,"metadata":{"raw":"{\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Developer instruction is not enabled for models/gemma-3n-e4b-it\",\n    \"status\": \"INVALID_ARGUMENT\"\n  }\n}\n","provider_name":"Google AI Studio"}},"user_id":"user_2urTWRYN1uQRnFdgRV3YkX88o4W"}
+Network/Request Error for model google/gemma-3n-e4b-it:free: 400 Client Error: Bad Request for url: https://openrouter.ai/api/v1/chat/completions
+127.0.0.1 - - [31/May/2025 12:51:56] "POST /api/test HTTP/1.1" 200 -
+DEBUG: Result from send_math_problem for google/gemma-3n-e4b-it:free: {'response_text': 'Network/Request Error: 400 Client Error: Bad Request for url: https://openrouter.ai/api/v1/chat/completions', 'response_time_seconds': 2.639867067337036, 'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0, 'error': 'Network/Request Error: 400 Client Error: Bad Request for url: https://openrouter.ai/api/v1/chat/completions'}
+DEBUG: Result from send_math_problem for google/gemma-3n-e4b-it:free: {'response_text': 'Network/Request Error: 400 Client Error: Bad Request for url: https://openrouter.ai/api/v1/chat/completions', 'response_time_seconds': 2.639867067337036, 'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0, 'error': 'Network/Request Error: 400 Client Error: Bad Request for url: https://openrouter.ai/api/v1/chat/completions'}
+Evaluating response for xy problem (expected 12)...
+No matching pattern found for xy problem.
+Using cached models list
+Attempting to send problem to model: meta-llama/llama-3.3-8b-instruct:free
+Received response status code: 200 for model: meta-llama/llama-3.3-8b-instruct:free
+Successfully received and parsed JSON response for model: meta-llama/llama-3.3-8b-instruct:free
+Raw response data for model meta-llama/llama-3.3-8b-instruct:free: {
+  "id": "gen-1748706748-9Ig6L60YjdtpPvC5QJ1q",
+  "provider": "Meta",
+  "model": "meta-llama/llama-3.3-8b-instruct:free",
+  "object": "chat.completion",
+  "created": 1748706749,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "To solve for xy, we can use the given equations and manipulate them to find the value of xy. Here are the steps:\n\nGiven:\n1. x\u00b2 + y\u00b2 = 25\n2. x + y = 7\n\nWe can square the second equation to get:\n(x + y)\u00b2 = 7\u00b2\nx\u00b2 + 2xy + y\u00b2 = 49\n\nNow, we can use the first equation to substitute x\u00b2 + y\u00b2 with 25:\nx\u00b2 + 2xy + y\u00b2 = 49\n25 + 2xy = 49\n\nSubtract 25 from both sides to isolate 2xy:\n2xy = 24\n\nDivide both sides by 2 to find xy:\nxy = 12\n\nTherefore, the value of xy is 12.",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 60,
+    "completion_tokens": 167,
+    "total_tokens": 227
+  }
+}
+127.0.0.1 - - [31/May/2025 12:52:30] "POST /api/test HTTP/1.1" 200 -
+DEBUG: Result from send_math_problem for meta-llama/llama-3.3-8b-instruct:free: {'response_text': 'To solve for xy, we can use the given equations and manipulate them to find the value of xy. Here are the steps:\n\nGiven:\n1. x² + y² = 25\n2. x + y = 7\n\nWe can square the second equation to get:\n(x + y)² = 7²\nx² + 2xy + y² = 49\n\nNow, we can use the first equation to substitute x² + y² with 25:\nx² + 2xy + y² = 49\n25 + 2xy = 49\n\nSubtract 25 from both sides to isolate 2xy:\n2xy = 24\n\nDivide both sides by 2 to find xy:\nxy = 12\n\nTherefore, the value of xy is 12.', 'response_time_seconds': 1.8978381156921387, 'prompt_tokens': 60, 'completion_tokens': 167, 'total_tokens': 227}
+DEBUG: Result from send_math_problem for meta-llama/llama-3.3-8b-instruct:free: {'response_text': 'To solve for xy, we can use the given equations and manipulate them to find the value of xy. Here are the steps:\n\nGiven:\n1. x² + y² = 25\n2. x + y = 7\n\nWe can square the second equation to get:\n(x + y)² = 7²\nx² + 2xy + y² = 49\n\nNow, we can use the first equation to substitute x² + y² with 25:\nx² + 2xy + y² = 49\n25 + 2xy = 49\n\nSubtract 25 from both sides to isolate 2xy:\n2xy = 24\n\nDivide both sides by 2 to find xy:\nxy = 12\n\nTherefore, the value of xy is 12.', 'response_time_seconds': 1.8978381156921387, 'prompt_tokens': 60, 'completion_tokens': 167, 'total_tokens': 227}
+Evaluating response for xy problem (expected 12)...
+Found match with pattern 'xy\s*=\s*12': xy = 12
+Using cached models list
+Attempting to send problem to model: nousresearch/deephermes-3-mistral-24b-preview:free
+Received response status code: 200 for model: nousresearch/deephermes-3-mistral-24b-preview:free
+Successfully received and parsed JSON response for model: nousresearch/deephermes-3-mistral-24b-preview:free
+Raw response data for model nousresearch/deephermes-3-mistral-24b-preview:free: {
+  "id": "gen-1748706761-mhHMm9BG9CKshz9Y4y1w",
+  "provider": "Chutes",
+  "model": "nousresearch/deephermes-3-mistral-24b-preview:free",
+  "object": "chat.completion",
+  "created": 1748706761,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "We are given two equations:\n\n1) x\u00b2 + y\u00b2 = 25\n2) x + y = 7\n\nWe want to find the value of xy.\n\nFrom equation 2, we have x + y = 7. Let's square both sides to get:\n\n(x + y)\u00b2 = 7\u00b2\nx\u00b2 + 2xy + y\u00b2 = 49\n\nNow, we know that x\u00b2 + y\u00b2 = 25. So substituting this value into the squared equation, we get:\n\n25 + 2xy = 49\n\nNow, let's solve for xy by isolating it on one side:\n\n2xy = 49 - 25\n2xy = 24\n\nFinally, divide both sides by 2 to find the value of xy:\n\nxy = 24 / 2\nxy = 12\n\nSo, the value of xy is 12.",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 96,
+    "completion_tokens": 194,
+    "total_tokens": 290,
+    "prompt_tokens_details": null
+  }
+}
+127.0.0.1 - - [31/May/2025 12:52:42] "POST /api/test HTTP/1.1" 200 -
+DEBUG: Result from send_math_problem for nousresearch/deephermes-3-mistral-24b-preview:free: {'response_text': "We are given two equations:\n\n1) x² + y² = 25\n2) x + y = 7\n\nWe want to find the value of xy.\n\nFrom equation 2, we have x + y = 7. Let's square both sides to get:\n\n(x + y)² = 7²\nx² + 2xy + y² = 49\n\nNow, we know that x² + y² = 25. So substituting this value into the squared equation, we get:\n\n25 + 2xy = 49\n\nNow, let's solve for xy by isolating it on one side:\n\n2xy = 49 - 25\n2xy = 24\n\nFinally, divide both sides by 2 to find the value of xy:\n\nxy = 24 / 2\nxy = 12\n\nSo, the value of xy is 12.", 'response_time_seconds': 2.168623924255371, 'prompt_tokens': 96, 'completion_tokens': 194, 'total_tokens': 290}
+DEBUG: Result from send_math_problem for nousresearch/deephermes-3-mistral-24b-preview:free: {'response_text': "We are given two equations:\n\n1) x² + y² = 25\n2) x + y = 7\n\nWe want to find the value of xy.\n\nFrom equation 2, we have x + y = 7. Let's square both sides to get:\n\n(x + y)² = 7²\nx² + 2xy + y² = 49\n\nNow, we know that x² + y² = 25. So substituting this value into the squared equation, we get:\n\n25 + 2xy = 49\n\nNow, let's solve for xy by isolating it on one side:\n\n2xy = 49 - 25\n2xy = 24\n\nFinally, divide both sides by 2 to find the value of xy:\n\nxy = 24 / 2\nxy = 12\n\nSo, the value of xy is 12.", 'response_time_seconds': 2.168623924255371, 'prompt_tokens': 96, 'completion_tokens': 194, 'total_tokens': 290}
+Evaluating response for xy problem (expected 12)...
+Found match with pattern 'xy\s*=\s*12': xy = 12
+Using cached models list
+Attempting to send problem to model: microsoft/phi-4-reasoning-plus:free
+Received response status code: 200 for model: microsoft/phi-4-reasoning-plus:free
+Successfully received and parsed JSON response for model: microsoft/phi-4-reasoning-plus:free
+Raw response data for model microsoft/phi-4-reasoning-plus:free: {
+  "id": "gen-1748706775-tBjTEaLYrY1nZXDtb8M7",
+  "provider": "Chutes",
+  "model": "microsoft/phi-4-reasoning-plus:free",
+  "object": "chat.completion",
+  "created": 1748706775,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "We are asked: If x^2 + y^2 = 25 and x + y = 7, what is the value of xy? We consider the identity: (x+y)^2 = x^2 + 2xy + y^2, then given x+y=7 so square of sum equals 7^2 =49. Then, plug given x^2 + y^2 = 25 so we have 49 = 25 + 2xy. Solve for xy: 2xy = 49 - 25 = 24, so xy =24/2 = 12.\n\nTherefore answer: xy = 12.\n\nDouble-check: Correct. But we must check if any offers check x-y pair? Consider quadratically: roots of equation t^2 - 7t + 12 = 0, then its discriminant is 49 - 48 =1 => roots are (7 \u00b1 1)/2 = 4, 3 making works consistent with x+y = 7, xy=12. Then x^2+y^2 = (4^2+3^2=16+9=25) Okay.\n\nI must produce answer only if asked. But caution: I must produce answer in plain text with explanation. I'll produce answer: \"xy = 12\".\n\nI must produce explanation: \"Solving (x+y)^2= x^2 +2xy + y^2 with given then answer is 12.\" Alternatively to produce explanation in decomposition.\n\nI'll produce answer text: \"xy=12.\"\n\nBut I must recall that assistant style response: \"I am Phi, etc\", and next I produce answer:\n\nWait: I must produce explanation and final answer. I'll produce explanation: \"By squaring both sides of the equation x+y=7, we get (x+y)^2=49, and using identity (x+y)^2= x^2+2xy+y^2 and substituting x^2+y^2=25, then we get: 49=25+2xy, rearranging terms gives 2xy=24, so xy=12.\" I'll produce answer.\n\nI'll produce answer: \"xy=12.\" I must produce: \"The product xy is 12.\" Then I produce note.\n\nI'll produce answer explanation and final answer in a final answer message.\n\nI'll produce output in plain text answer.\n\nI'll produce content answer explanation: \"Given x^2 + y^2 =25 and x+y=7, using identity (x+y)^2 = x^2 + y^2 +2xy, then 7^2=25+2xy, that is 49=25+2xy, 2xy=24 so xy=12.\" I'll produce answer.\n\nI'll produce final answer message.We are given:\n\u2003x\u00b2 + y\u00b2 = 25\n\u2003x + y = 7\n\nRecall the identity:\n\u2003(x + y)\u00b2 = x\u00b2 + 2xy + y\u00b2\n\nSubstitute the given values into the identity:\n\u20037\u00b2 = 25 + 2xy\n\u200349 = 25 + 2xy\n\nSubtract 25 from both sides:\n\u200349 \u2212 25 = 2xy\n\u200324 = 2xy\n\nDivide both sides by 2:\n\u2003xy = 12\n\nThus, the value of xy is 12.",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 250,
+    "completion_tokens": 713,
+    "total_tokens": 963,
+    "prompt_tokens_details": null
+  }
+}
+127.0.0.1 - - [31/May/2025 12:53:01] "POST /api/test HTTP/1.1" 200 -
+127.0.0.1 - - [31/May/2025 12:53:08] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/May/2025 12:53:08] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [31/May/2025 12:53:08] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [31/May/2025 12:53:08] "GET /api/models HTTP/1.1" 200 -
+127.0.0.1 - - [31/May/2025 12:53:09] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/May/2025 12:53:09] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [31/May/2025 12:53:09] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [31/May/2025 12:53:10] "GET /api/models HTTP/1.1" 200 -
+127.0.0.1 - - [31/May/2025 12:53:13] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [31/May/2025 12:53:13] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [31/May/2025 12:53:13] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [31/May/2025 12:53:13] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [31/May/2025 12:53:13] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [31/May/2025 12:53:13] "GET /api/models HTTP/1.1" 200 -
+/Users/rnarciso/.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

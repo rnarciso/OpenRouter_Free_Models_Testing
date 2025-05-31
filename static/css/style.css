@@ -1,0 +1,478 @@
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f4f4;
+    padding: 20px;
+}
+
+/* Header Styles */
+header {
+    background-color: #35424a;
+    color: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-bottom: 3px solid #1e90ff;
+    border-radius: 5px 5px 0 0;
+}
+
+header h1 {
+    display: block;
+    margin-bottom: 5px;
+}
+
+header .subtitle {
+    font-style: italic;
+    color: #ccc;
+    margin-bottom: 15px;
+}
+
+nav {
+    float: right;
+    margin-top: -40px;
+}
+
+nav ul {
+    list-style: none;
+}
+
+nav li {
+    display: inline;
+    margin-left: 20px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 16px;
+}
+
+nav a:hover {
+    color: #1e90ff;
+}
+
+/* Main Content Styles */
+main {
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+section {
+    margin-bottom: 30px;
+}
+
+h2 {
+    margin-bottom: 15px;
+    color: #35424a;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.container {
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+/* Problem Description Styles */
+.math-problem {
+    background-color: #e9f7fe;
+    border-left: 4px solid #1e90ff;
+    padding: 15px;
+    margin: 15px 0;
+    font-size: 1.1em;
+}
+
+.solution-note {
+    font-weight: bold;
+    color: #2c7be5;
+
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto; /* 10% from the top and centered */
+    padding: 25px;
+    border: 1px solid #888;
+    width: 70%; /* Could be more or less, depending on screen size */
+    max-width: 800px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.modal-content pre {
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    padding: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap; /* Wrap long lines */
+    word-wrap: break-word;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: #444;
+}
+
+.close-button {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+    margin-top: 10px;
+}
+
+/* Control Panel Styles */
+.control-group {
+    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+label {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+select {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background-color: white;
+    min-width: 200px;
+}
+
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.primary {
+    background-color: #2c7be5;
+    color: white;
+}
+
+.primary:hover:not(:disabled) {
+    background-color: #1a68d1;
+}
+
+.secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.secondary:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+
+.danger {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.danger:hover:not(:disabled) {
+    background-color: #c0392b;
+}
+
+/* Results Table Styles */
+#results-container {
+    overflow-x: auto;
+}
+
+#results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+#results-table th, 
+#results-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+#results-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+#results-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+.correct {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.incorrect {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.score-high {
+    background-color: rgba(46, 204, 113, 0.1);
+}
+
+.score-medium {
+    background-color: rgba(241, 196, 15, 0.1);
+}
+
+.score-low {
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Loading Indicator Styles */
+#loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #1e90ff;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Progress Bar Styles */
+.progress-container {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 20px;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #2c7be5;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+#progress-text, #current-model-text {
+    font-size: 14px;
+    color: #555;
+    margin: 5px 0;
+}
+
+#current-model-text {
+    font-style: italic;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#no-results-message {
+    text-align: center;
+    padding: 20px;
+    color: #777;
+    font-style: italic;
+}
+
+/* Footer Styles */
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 20px;
+    background-color: #35424a;
+    color: white;
+    border-radius: 0 0 5px 5px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    nav {
+        float: none;
+        margin-top: 10px;
+        text-align: center;
+    }
+    
+    nav li {
+        margin: 0 10px;
+    }
+    
+    .control-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    select, .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    #results-table {
+        font-size: 0.9em;
+    }
+}
+
+/* Markdown content styles */
+.markdown-content {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    max-height: 70vh;
+    overflow: auto;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #2575fc;
+}
+
+#no-results-message {
+    text-align: center;
+    padding: 20px;
+    color: #777;
+    font-style: italic;
+    display: none;
+}
+
+.markdown-content p {
+    margin-bottom: 1rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content code {
+    background: #e9ecef;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.markdown-content pre {
+    background: #2d2d2d;
+    color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+    overflow: auto;
+    margin-bottom: 1rem;
+}
+
+.markdown-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid #2575fc;
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #6c757d;
+    font-style: italic;
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    header, main, footer {
+        padding: 15px;
+    }
+    
+    #results-table th, 
+    #results-table td {
+        padding: 8px;
+    }
+}

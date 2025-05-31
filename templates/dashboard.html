@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Results Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Test Results Dashboard</h1>
+        <p class="subtitle">View historical test results</p>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="#results">Results</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="results">
+            <h2>Saved Test Results</h2>
+            <div class="container">
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>Prompt</th>
+                            <th>Correct</th>
+                            <th>Response Time</th>
+                            <th>Tokens</th>
+                            <th>Score</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        <!-- Results will be populated here -->
+                    </tbody>
+                </table>
+                <p id="no-results-message">No test results found in database.</p>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 OpenRouter Model Testing System</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/results')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('results-body');
+                    tbody.innerHTML = '';
+                    
+                    data.forEach(result => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${result.model_name}</td>
+                            <td>${result.prompt.substring(0, 50)}...</td>
+                            <td class="${result.is_correct ? 'correct' : 'incorrect'}">
+                                ${result.is_correct ? 'Yes' : 'No'}
+                            </td>
+                            <td>${result.response_time.toFixed(2)}s</td>
+                            <td>${result.total_tokens}</td>
+                            <td>${result.score}</td>
+                            <td>${new Date(result.timestamp).toLocaleString()}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching results:', error);
+                });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/results')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('results-body');
+                    const noResultsMsg = document.getElementById('no-results-message');
+                    
+                    if (data.length === 0) {
+                        noResultsMsg.style.display = 'block';
+                        return;
+                    }
+                    
+                    noResultsMsg.style.display = 'none';
+                    tbody.innerHTML = '';
+                    
+                    data.forEach(result => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${result.model_name}</td>
+                            <td>${result.prompt.substring(0, 50)}${result.prompt.length > 50 ? '...' : ''}</td>
+                            <td class="${result.is_correct ? 'correct' : 'incorrect'}">
+                                ${result.is_correct ? 'Yes' : 'No'}
+                            </td>
+                            <td>${result.response_time.toFixed(2)}s</td>
+                            <td>${result.total_tokens}</td>
+                            <td>${result.score}</td>
+                            <td>${new Date(result.timestamp).toLocaleString()}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching results:', error);
+                    document.getElementById('no-results-message').textContent = 'Error loading results';
+                    document.getElementById('no-results-message').style.display = 'block';
+                });
+        });
+    </script>
+</body>
+</html>

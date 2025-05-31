@@ -1,0 +1,7 @@
+# Ignore all dot-directories and their contents
+.*/
+.*
+!.gitignore
+
+# Specifically ignore the .cache directory and its contents
+.cache/
