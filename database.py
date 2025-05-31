@@ -2,40 +2,48 @@ import psycopg2
 import os
 from datetime import datetime
 
-# Parâmetros de conexão PostgreSQL
-DB_NAME = os.environ.get("DB_NAME", "testdb")
-DB_USER = os.environ.get("DB_USER", "testuser")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "testpassword")
-DB_HOST = "db.example.com"  # Placeholder, não conectará de fato
+# PostgreSQL connection parameters
+DB_NAME = "testdb"
+DB_USER = "testuser"
+DB_PASSWORD = "testpassword"
+DB_HOST = "db.example.com"  # Placeholder, won't actually connect
 DB_PORT = "5432"
 
 # Construct a DSN (Data Source Name)
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 def init_db():
+    conn = None  # Initialize conn to None
+    c = None # Initialize cursor to None
     try:
-        with psycopg2.connect(DATABASE_URL) as conn:
-            with conn.cursor() as c:
-                # Create results table
-                c.execute('''CREATE TABLE IF NOT EXISTS results (
-                    id SERIAL PRIMARY KEY,
-                    model_id TEXT NOT NULL,
-                    model_name TEXT NOT NULL,
-                    prompt TEXT NOT NULL,
-                    response_text TEXT NOT NULL,
-                    is_correct BOOLEAN NOT NULL,
-                    answer_found TEXT,
-                    response_time REAL NOT NULL,
-                    prompt_tokens INTEGER NOT NULL,
-                    completion_tokens INTEGER NOT NULL,
-                    total_tokens INTEGER NOT NULL,
-                    score INTEGER NOT NULL,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )''')
-                conn.commit()
+        conn = psycopg2.connect(DATABASE_URL)
+        c = conn.cursor()
+
+        # Create results table
+        c.execute('''CREATE TABLE IF NOT EXISTS results (
+            id SERIAL PRIMARY KEY,
+            model_id TEXT NOT NULL,
+            model_name TEXT NOT NULL,
+            prompt TEXT NOT NULL,
+            response_text TEXT NOT NULL,
+            is_correct BOOLEAN NOT NULL,
+            answer_found TEXT,
+            response_time REAL NOT NULL,
+            prompt_tokens INTEGER NOT NULL,
+            completion_tokens INTEGER NOT NULL,
+            total_tokens INTEGER NOT NULL,
+            score INTEGER NOT NULL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+
+        conn.commit()
     except psycopg2.Error as e:
-        import logging
-        logging.error(f"Erro ao inicializar o banco de dados: {e}")
+        print(f"Error initializing database: {e}")
+    finally:
+        if c:
+            c.close()
+        if conn:
+            conn.close()
 
 def save_result(result):
     conn = None  # Initialize conn to None
