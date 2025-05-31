@@ -5,3 +5,7 @@
 
 # Specifically ignore the .cache directory and its contents
 .cache/
+*.log
+*.pyc
+flask_pid.txt
+
