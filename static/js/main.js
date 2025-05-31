@@ -29,11 +29,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressText = document.getElementById('progress-text');
     const currentModelText = document.getElementById('current-model-text');
 
+    let sortState = { column: 'score', direction: 'desc' }; // Initial sort state
+
     // Load models when the page loads
     loadModels();
     loadInitialResults(); // Load existing results
 
-    // Event listeners
+    // Event listeners for table sorting
+    document.querySelectorAll('#results-table th.sortable-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const columnKey = header.dataset.column;
+            const dataType = header.dataset.type;
+            sortTable(columnKey, dataType);
+        });
+    });
+
+    // Other Event listeners
     testSingleModelBtn.addEventListener('click', testSelectedModel);
     testAllModelsBtn.addEventListener('click', testAllModels);
     clearResultsBtn.addEventListener('click', clearResults);
@@ -172,99 +183,92 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Use EventSource for server-sent events
         const eventSource = new EventSource('/api/test-all');
+        let totalModelsToTest = 0; // Variable to store total models
 
         eventSource.onmessage = function(event) {
-            const data = JSON.parse(event.data);
+            const parsedData = JSON.parse(event.data);
 
-            if (data.type === 'progress') {
-                // Update progress bar
-                const percent = (data.current / data.total) * 100;
-                progressBar.style.width = `${percent}%`;
-                progressText.textContent = `Testing models: ${data.current}/${data.total}`;
-                currentModelText.textContent = `Currently testing: ${data.testing}`;
-            }
-            else if (data.type === 'result') {
-                // Use the score calculated by the backend for streamed results
-                const result = data.data;
-                console.log("Using score from backend (stream):", result?.score);
+            if (parsedData.type === 'total') {
+                totalModelsToTest = parsedData.data.total_models;
+                // You could update a UI element here if you want to show total before progress starts
+                // For now, progress bar will show 0/totalModelsToTest initially if needed
+                progressText.textContent = `Testing models: 0/${totalModelsToTest}`;
 
-                // Add the result to the table
-                addResultToTable(result);
+            } else if (parsedData.type === 'progress') {
+                const progressData = parsedData.data;
+                const percent = (progressData.current_model_count / progressData.total_models) * 100;
+                progressBar.style.width = percent + '%';
+                progressText.textContent = `Testing models: ${progressData.current_model_count}/${progressData.total_models}`;
+                currentModelText.textContent = `Currently testing: ${progressData.testing_model_name}`;
 
-                // Hide the "no results" message
+            } else if (parsedData.type === 'result') {
+                addResultToTable(parsedData.data);
                 noResultsMessage.style.display = 'none';
-            }
-            else if (data.type === 'complete') {
-                // Testing is complete
-                eventSource.close();
-                hideLoading();
-                hideProgress(); // Call the restored function
 
-                // Re-enable buttons
+            } else if (parsedData.type === 'error') {
+                console.error('SSE Error for model:', parsedData.data.model_name, 'Message:', parsedData.data.error_message);
+                // Optionally, add an error row to the table or display a small error message
+                // For an overall error, it might close the connection via onerror or a specific 'overall_error' type
+                if (!parsedData.data.model_name) { // Indicates an overall error
+                    alert(`An overall error occurred during testing: ${parsedData.data.error_message}`);
+                    eventSource.close(); // Close on overall error
+                    hideLoading();
+                    hideProgress();
+                    testSingleModelBtn.disabled = false;
+                    testAllModelsBtn.disabled = false;
+                }
+
+
+            } else if (parsedData.type === 'complete') {
+                console.log('SSE Stream complete:', parsedData.data.message);
+                eventSource.close();
+                // hideLoading(); // hideProgress generally handles this or loading is already hidden.
+                hideProgress();
                 testSingleModelBtn.disabled = false;
                 testAllModelsBtn.disabled = false;
-
-                // Sort the results by score
-                sortResultsByScore();
+                sortTable(sortState.column, document.querySelector(`th[data-column="${sortState.column}"]`).dataset.type, sortState.direction); // Re-apply current sort or default
+                // Optionally display parsedData.data.message
+                currentModelText.textContent = parsedData.data.message; // Show completion message
             }
         };
 
-        eventSource.onerror = function() {
-            console.error('EventSource failed');
+        eventSource.onerror = function(error) {
+            console.error('EventSource failed:', error);
             eventSource.close();
             hideLoading();
-            hideProgress(); // Call the restored function
-
-            // Re-enable buttons
+            hideProgress();
             testSingleModelBtn.disabled = false;
             testAllModelsBtn.disabled = false;
-
-            alert('Failed to test all models. Please try again later or test models individually.');
+            alert('Failed to test all models due to a connection error or server issue. Please try again later.');
         };
     }
 
     // Function to test a subset of models (for quicker testing)
+    // Note: This function was not in the original file structure provided in the problem,
+    // but if it exists, it should also call sortTable.
     function testSubsetModels() {
         showLoading();
-
-        // Clear existing results
         clearResults();
-
-        // Disable buttons during testing
         testSingleModelBtn.disabled = true;
         testAllModelsBtn.disabled = true;
 
-        fetch('/api/test-subset', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
+        fetch('/api/test-subset') // Assuming GET, or add method: 'POST' if needed
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to test models');
-                }
+                if (!response.ok) throw new Error('Failed to test subset of models');
                 return response.json();
             })
-            .then(results => {
-                // Process each result
-                results.forEach(result => {
-                    // Use the score calculated by the backend for subset results
-                    console.log("Using score from backend (subset):", result?.score);
-
-                    // Add the result to the table
-                    addResultToTable(result);
-                });
-
-                // Hide the "no results" message
-                noResultsMessage.style.display = 'none';
-
-                // Sort the results by score
-                sortResultsByScore();
+            .then(data => { // Assuming data is { results: [...] }
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(result => addResultToTable(result));
+                    noResultsMessage.style.display = 'none';
+                    sortTable('score', 'number', 'desc'); // Default sort for subset
+                } else {
+                    noResultsMessage.style.display = 'block';
+                }
             })
             .catch(error => {
-                console.error('Error testing models:', error);
-                alert('Failed to test models. Please try again later.');
+                console.error('Error testing subset of models:', error);
+                alert('Failed to test subset of models. Please try again later.');
             })
             .finally(() => {
                 hideLoading();
@@ -339,24 +343,58 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to sort the results by score (highest to lowest)
-    function sortResultsByScore() {
-        const rows = Array.from(resultsBody.querySelectorAll('tr'));
-
-        rows.sort((a, b) => {
-            const scoreA = parseFloat(a.cells[5].textContent);
-            const scoreB = parseFloat(b.cells[5].textContent);
-            return scoreB - scoreA;
-        });
-
-        // Clear the table
-        resultsBody.innerHTML = '';
-
-        // Add the sorted rows back to the table
-        rows.forEach(row => {
-            resultsBody.appendChild(row);
+    function updateSortIndicators() {
+        document.querySelectorAll('#results-table th.sortable-header').forEach(th => {
+            th.classList.remove('sort-asc', 'sort-desc');
+            if (th.dataset.column === sortState.column) {
+                th.classList.add(sortState.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+            }
         });
     }
+
+    function sortTable(columnKey, dataType, forceDirection = null) {
+        if (forceDirection) {
+            sortState.direction = forceDirection;
+        } else {
+            if (sortState.column === columnKey) {
+                sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                // Default to ascending for new columns, unless it's 'score'
+                sortState.direction = (columnKey === 'score') ? 'desc' : 'asc';
+            }
+        }
+        sortState.column = columnKey;
+
+        const rows = Array.from(resultsBody.querySelectorAll('tr'));
+        // Find column index by data-column attribute; more robust than fixed index
+        const headerCells = Array.from(document.querySelectorAll('#results-table th'));
+        const columnIndex = headerCells.findIndex(th => th.dataset.column === columnKey);
+
+        if (columnIndex === -1) {
+            console.error('Could not find column index for key:', columnKey);
+            return;
+        }
+
+        rows.sort((a, b) => {
+            const valA = a.cells[columnIndex].textContent;
+            const valB = b.cells[columnIndex].textContent;
+            let comparison = 0;
+
+            if (dataType === 'number') {
+                const numA = parseFloat(valA); // parseFloat handles "1.23s" -> 1.23
+                const numB = parseFloat(valB);
+                comparison = numA - numB;
+            } else { // string
+                comparison = valA.toLowerCase().localeCompare(valB.toLowerCase());
+            }
+            return sortState.direction === 'asc' ? comparison : -comparison;
+        });
+
+        resultsBody.innerHTML = ''; // Clear existing rows
+        rows.forEach(row => resultsBody.appendChild(row));
+        updateSortIndicators();
+    }
+
 
     // Function to clear the results
     function clearResults() {
@@ -416,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     addResultToTable(transformedResult);
                 });
                 noResultsMessage.style.display = 'none';
-                sortResultsByScore(); // Sort results after loading
+                sortTable('score', 'number', 'desc'); // Default sort after loading initial results
             } else {
                 noResultsMessage.style.display = 'block'; // Ensure it's visible if no results
             }

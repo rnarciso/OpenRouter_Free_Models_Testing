@@ -94,12 +94,13 @@ h2 {
     font-size: 1.1em;
 }
 
-.solution-note {
+.solution-note { /* This class might be removed from HTML but keeping style just in case */
     font-weight: bold;
     color: #2c7be5;
+    margin-top: 10px;
+}
 
-
-/* Modal Styles */
+/* Modal styles */
 .modal {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
@@ -109,48 +110,37 @@ h2 {
     width: 100%; /* Full width */
     height: 100%; /* Full height */
     overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity - overlay */
+    padding-top: 60px; /* Location of the box */
 }
 
 .modal-content {
     background-color: #fefefe;
-    margin: 10% auto; /* 10% from the top and centered */
-    padding: 25px;
+    margin: 5% auto; /* 5% from the top and centered */
+    padding: 20px;
     border: 1px solid #888;
-    width: 70%; /* Could be more or less, depending on screen size */
-    max-width: 800px;
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 700px; /* Max width */
     border-radius: 8px;
-    position: relative;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    position: relative; /* For positioning the close button */
 }
 
-.modal-content h2 {
-    margin-top: 0;
-    color: #333;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-}
-
-.modal-content pre {
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
-    padding: 15px;
-    max-height: 400px;
-    overflow-y: auto;
-    white-space: pre-wrap; /* Wrap long lines */
-    word-wrap: break-word;
-    font-family: monospace;
-    font-size: 0.9em;
-    color: #444;
+.modal-content h2 { /* Style for h2 specifically inside modal-content */
+    margin-top: 0; /* Remove extra margin if h2 is first child */
+    margin-bottom: 15px; /* Space below modal title */
+    padding-bottom: 10px; /* Line below modal title */
+    border-bottom: 1px solid #eee; /* Line color */
 }
 
 .close-button {
     color: #aaa;
-    position: absolute;
-    top: 10px;
-    right: 20px;
+    /* float: right;  Removed, using absolute positioning */
     font-size: 28px;
     font-weight: bold;
+    position: absolute; /* Position relative to modal-content */
+    top: 10px;
+    right: 20px;
 }
 
 .close-button:hover,
@@ -158,8 +148,6 @@ h2 {
     color: black;
     text-decoration: none;
     cursor: pointer;
-}
-    margin-top: 10px;
 }
 
 /* Control Panel Styles */
@@ -258,6 +246,29 @@ select {
     font-weight: bold;
 }
 
+.sortable-header {
+    cursor: pointer;
+    position: relative; /* For positioning sort indicators */
+}
+.sortable-header:hover {
+    background-color: #e0e0e0; /* Darker hover effect for sortable headers */
+}
+/* Basic sort indicators */
+.sortable-header::after {
+    content: '';
+    position: absolute;
+    right: 8px; /* Adjust as needed for padding */
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent; /* Size of the arrow */
+}
+.sortable-header.sort-asc::after {
+    border-bottom-color: #333; /* Up arrow */
+}
+.sortable-header.sort-desc::after {
+    border-top-color: #333; /* Down arrow */
+}
+
 #results-table tr:hover {
     background-color: #f5f5f5;
 }
@@ -352,7 +363,9 @@ select {
     padding: 20px;
     color: #777;
     font-style: italic;
+    /* display: none; /* Controlled by JS: block if no results, none if results exist */
 }
+
 
 /* Footer Styles */
 footer {
@@ -391,75 +404,63 @@ footer {
     }
 }
 
-/* Markdown content styles */
+/* Ensure markdown content within modal is scrollable if it overflows */
 .markdown-content {
-    padding: 1rem;
-    background: #f8f9fa;
+    max-height: 60vh; /* Adjust as needed */
+    overflow-y: auto;
+    overflow-x: hidden; /* Prevent horizontal scroll for pre/code if not desired initially */
+    background: #f9f9f9; /* Slight background for the text area */
+    padding: 10px;
     border-radius: 4px;
-    max-height: 70vh;
-    overflow: auto;
+    margin-top: 15px; /* Space above the markdown content area */
 }
 
-.markdown-content h1,
-.markdown-content h2,
-.markdown-content h3,
-.markdown-content h4,
-.markdown-content h5,
-.markdown-content h6 {
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-    color: #2575fc;
+/* Basic styling for elements often found in Markdown, can be expanded */
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+    margin-top: 0.5em;
+    margin-bottom: 0.25em;
+    color: #333; /* Default heading color */
 }
-
-#no-results-message {
-    text-align: center;
-    padding: 20px;
-    color: #777;
-    font-style: italic;
-    display: none;
-}
-
 .markdown-content p {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5em;
+    line-height: 1.6;
 }
-
-.markdown-content ul,
-.markdown-content ol {
-    margin-left: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.markdown-content li {
-    margin-bottom: 0.5rem;
-}
-
-.markdown-content code {
-    background: #e9ecef;
-    padding: 0.2rem 0.4rem;
-    border-radius: 4px;
-    font-family: monospace;
-}
-
 .markdown-content pre {
-    background: #2d2d2d;
-    color: #f8f9fa;
-    padding: 1rem;
+    background-color: #eee; /* Slightly darker than markdown-content bg */
+    padding: 10px;
     border-radius: 4px;
-    overflow: auto;
-    margin-bottom: 1rem;
+    overflow-x: auto; /* Allow horizontal scroll for code blocks */
+    white-space: pre-wrap; /* Wrap long lines that are not in code blocks */
+    word-wrap: break-word; /* Break words if they are too long */
+    color: #333; /* Text color for code blocks */
 }
-
-.markdown-content pre code {
-    background: none;
+.markdown-content code {
+    font-family: monospace;
+    background-color: #eee; /* Light background for inline code */
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+.markdown-content pre code { /* Reset background for code within pre, as pre handles it */
+    background-color: transparent;
     padding: 0;
 }
-
-.markdown-content blockquote {
-    border-left: 4px solid #2575fc;
-    padding-left: 1rem;
-    margin-left: 0;
-    color: #6c757d;
-    font-style: italic;
+.markdown-content ul, .markdown-content ol {
+    margin-left: 20px; /* Keep this if you want standard list indentation */
+    margin-bottom: 0.5em;
+    padding-left: 1.5em; /* Ensure bullets/numbers are not cut off */
+}
+.markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 1em;
+}
+.markdown-content th, .markdown-content td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+.markdown-content th {
+    background-color: #f2f2f2;
 }
 
 @media (max-width: 480px) {

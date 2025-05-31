@@ -2,19 +2,21 @@ import psycopg2
 import os
 from datetime import datetime
 
-# Parâmetros de conexão PostgreSQL
+# PostgreSQL connection parameters fetched from environment variables
+# Defaults are provided for local development or if variables are not set.
+DB_HOST = os.environ.get("DB_HOST", "db.example.com")
+DB_PORT = os.environ.get("DB_PORT", "5432")
 DB_NAME = os.environ.get("DB_NAME", "testdb")
 DB_USER = os.environ.get("DB_USER", "testuser")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "testpassword")
-DB_HOST = "db.example.com"  # Placeholder, não conectará de fato
-DB_PORT = "5432"
 
-# Construct a DSN (Data Source Name)
+# Construct a DSN (Data Source Name) using the fetched parameters
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 def init_db():
-    with psycopg2.connect(DATABASE_URL) as conn:
-        with conn.cursor() as c:
+    conn = None  # Initialize conn to None
+    c = None # Initialize cursor to None
+    try:
         conn = psycopg2.connect(DATABASE_URL)
         c = conn.cursor()
 
@@ -32,13 +34,21 @@ def init_db():
             completion_tokens INTEGER NOT NULL,
             total_tokens INTEGER NOT NULL,
             score INTEGER NOT NULL,
+            expected_answer TEXT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+
+        # Create global_problem table
+        c.execute('''CREATE TABLE IF NOT EXISTS global_problem (
+            id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+            problem_text TEXT NOT NULL,
+            correct_answer TEXT NOT NULL,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )''')
 
         conn.commit()
     except psycopg2.Error as e:
-        import logging
-        logging.error(f"Erro ao inicializar o banco de dados: {e}")
+        print(f"Error initializing database: {e}")
     finally:
         if c:
             c.close()
@@ -55,8 +65,8 @@ def save_result(result):
         c.execute('''INSERT INTO results (
             model_id, model_name, prompt, response_text,
             is_correct, answer_found, response_time,
-            prompt_tokens, completion_tokens, total_tokens, score
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', (
+            prompt_tokens, completion_tokens, total_tokens, score, expected_answer
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', (
             result['model_id'],
             result['model_name'],
             result['prompt'],
@@ -67,7 +77,8 @@ def save_result(result):
             result['prompt_tokens'],
             result['completion_tokens'],
             result['total_tokens'],
-            result['score']
+            result['score'],
+            result['expected_answer']
         ))
 
         conn.commit()
@@ -91,7 +102,7 @@ def get_all_results():
             id, model_id, model_name, prompt, response_text,
             is_correct, answer_found, response_time,
             prompt_tokens, completion_tokens, total_tokens,
-            score, timestamp
+            score, expected_answer, timestamp
             FROM results ORDER BY timestamp DESC;''')
 
         rows = c.fetchall()
@@ -107,3 +118,55 @@ def get_all_results():
         if conn:
             conn.close()
     return results_list
+
+def save_global_problem(problem_text, correct_answer):
+    conn = None
+    c = None
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        c = conn.cursor()
+
+        upsert_sql = """
+        INSERT INTO global_problem (id, problem_text, correct_answer, last_updated)
+        VALUES (1, %s, %s, CURRENT_TIMESTAMP)
+        ON CONFLICT (id) DO UPDATE
+        SET problem_text = EXCLUDED.problem_text,
+            correct_answer = EXCLUDED.correct_answer,
+            last_updated = EXCLUDED.last_updated;
+        """
+        c.execute(upsert_sql, (problem_text, correct_answer))
+        conn.commit()
+        print(f"Global problem saved: {problem_text[:50]}... Answer: {correct_answer}")
+    except psycopg2.Error as e:
+        print(f"Error saving global problem: {e}")
+    finally:
+        if c:
+            c.close()
+        if conn:
+            conn.close()
+
+def get_global_problem():
+    conn = None
+    c = None
+    problem_data = None
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        c = conn.cursor()
+
+        c.execute("SELECT problem_text, correct_answer FROM global_problem WHERE id = 1;")
+        row = c.fetchone()
+
+        if row:
+            problem_data = {
+                "problem_text": row[0],
+                "correct_answer": row[1]
+            }
+            print(f"Global problem retrieved: {problem_data['problem_text'][:50]}...")
+    except psycopg2.Error as e:
+        print(f"Error fetching global problem: {e}")
+    finally:
+        if c:
+            c.close()
+        if conn:
+            conn.close()
+    return problem_data

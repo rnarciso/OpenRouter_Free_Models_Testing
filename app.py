@@ -27,13 +27,39 @@ client = OpenRouterClient(API_KEY)
 # Initialize the database
 database.init_db()
 
-# The current math problem to test (can be updated via API)
-current_problem = "If x² + y² = 25 and x + y = 7, what is the value of xy?"
+# --- Global Problem State ---
+DEFAULT_PROBLEM = "If x² + y² = 25 and x + y = 7, what is the value of xy?"
+DEFAULT_CORRECT_ANSWER = "12"
+
+current_problem = DEFAULT_PROBLEM
+current_correct_answer = DEFAULT_CORRECT_ANSWER
+
+def load_or_initialize_global_problem():
+    global current_problem, current_correct_answer
+    print("Attempting to load global problem from database...")
+    problem_data = database.get_global_problem()
+    if problem_data:
+        current_problem = problem_data["problem_text"]
+        current_correct_answer = problem_data["correct_answer"]
+        print(f"Loaded global problem: '{current_problem[:50]}...' Answer: '{current_correct_answer}'")
+    else:
+        print("No global problem found in database, saving default problem.")
+        current_problem = DEFAULT_PROBLEM
+        current_correct_answer = DEFAULT_CORRECT_ANSWER
+        database.save_global_problem(current_problem, current_correct_answer)
+        print(f"Saved default global problem: '{current_problem[:50]}...' Answer: '{current_correct_answer}'")
+
+load_or_initialize_global_problem()
+# --- End Global Problem State ---
+
 
 @app.route('/')
 def index():
     """Render the main testing interface."""
-    return render_template('index.html')
+    # current_problem and current_correct_answer are already global
+    return render_template('index.html',
+                           current_problem=current_problem,
+                           current_correct_answer=current_correct_answer)
 
 @app.route('/dashboard')
 def dashboard():
@@ -91,11 +117,14 @@ def test_model():
 
         # Send the math problem to the model
         result = client.send_math_problem(model_id, current_problem)
-        print(f"DEBUG: Result from send_math_problem for {model_id}: {result}") # Add debug print
-        print(f"DEBUG: Result from send_math_problem for {model_id}: {result}") # Add debug print
+        # app.logger.debug(f"DEBUG: Result from send_math_problem for {model_id}: {result}") # Replaced by more specific log below
+
+        # Log before evaluation
+        response_text_snippet = result.get('response_text', '')[:100]
+        app.logger.debug(f"Calling client.evaluate_response for model {model_id}. Expected answer: '{current_correct_answer}'. Model response (first 100 chars): '{response_text_snippet}'")
         
         # Evaluate the response
-        is_correct, found_answer = client.evaluate_response(result.get("response_text", ""), problem_type="xy")
+        is_correct, found_answer = client.evaluate_response(result.get("response_text", ""), current_correct_answer)
         
         # Calculate score
         score = calculate_score(is_correct, result.get("response_time_seconds", 0), result.get("total_tokens", 0))
@@ -127,7 +156,8 @@ def test_model():
             "prompt_tokens": result["prompt_tokens"],
             "completion_tokens": result["completion_tokens"],
             "total_tokens": result.get("total_tokens", 0),
-            "score": score
+            "score": score,
+            "expected_answer": current_correct_answer
         }
         database.save_result(result_to_save)
         
@@ -149,11 +179,11 @@ def test_all_models():
             free_models = client.get_free_models()
             
             # Limit to first 5 models to prevent timeouts
-            models_to_test = free_models[:5]
+            models_to_test = free_models[:5] # For actual testing, consider removing or increasing this limit
             total_models = len(models_to_test)
             
             # Send the total number of models to test
-            yield f"data: {json.dumps({'total': total_models})}\n\n"
+            yield f"data: {json.dumps({'type': 'total', 'data': {'total_models': total_models}})}\n\n"
             
             # Test each model
             for i, model in enumerate(models_to_test):
@@ -162,13 +192,26 @@ def test_all_models():
                 
                 try:
                     # Send progress update
-                    yield f"data: {json.dumps({'progress': i+1, 'total': total_models, 'testing': model_name})}\n\n"
+                    progress_data = {
+                        "current_model_count": i + 1,
+                        "total_models": total_models,
+                        "testing_model_name": model_name
+                    }
+                    yield f"data: {json.dumps({'type': 'progress', 'data': progress_data})}\n\n"
                     
                     # Test the model
                     result = client.send_math_problem(model_id, current_problem)
                     
+                    # Check for errors from client.send_math_problem (e.g. timeout, network error)
+                    if result.get("error"):
+                        raise Exception(result.get("response_text", "Unknown error during model test"))
+
+                    # Log before evaluation
+                    response_text_snippet_all = result.get('response_text', '')[:100]
+                    app.logger.debug(f"Calling client.evaluate_response in test_all_models for model {model_name}. Expected answer: '{current_correct_answer}'. Model response (first 100 chars): '{response_text_snippet_all}'")
+
                     # Evaluate the response
-                    is_correct, found_answer = client.evaluate_response(result.get("response_text", ""), problem_type="xy")
+                    is_correct, found_answer = client.evaluate_response(result.get("response_text", ""), current_correct_answer)
                     
                     # Calculate score
                     score = calculate_score(is_correct, result.get("response_time_seconds", 0), result.get("total_tokens", 0))
@@ -201,28 +244,30 @@ def test_all_models():
                         "prompt_tokens": result["prompt_tokens"],
                         "completion_tokens": result["completion_tokens"],
                         "total_tokens": result.get("total_tokens", 0),
-                        "score": score
+                        "score": score,
+                        "expected_answer": current_correct_answer
                     }
                     database.save_result(result_to_save)
                     
                     # Send the result to the client
-                    yield f"data: {json.dumps(test_result)}\n\n"
+                    yield f"data: {json.dumps({'type': 'result', 'data': test_result})}\n\n"
                     
                 except Exception as e:
                     # Send error for this model
-                    error_result = {
-                        "model_id": model_id,
+                    error_data = {
                         "model_name": model_name,
-                        "error": str(e)
+                        "error_message": str(e)
                     }
-                    yield f"data: {json.dumps(error_result)}\n\n"
+                    yield f"data: {json.dumps({'type': 'error', 'data': error_data})}\n\n"
             
             # Send completion message
-            yield f"data: {json.dumps({'complete': True})}\n\n"
+            completion_data = {"message": "All models tested successfully."}
+            yield f"data: {json.dumps({'type': 'complete', 'data': completion_data})}\n\n"
             
         except Exception as e:
             # Send overall error
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            overall_error_data = {"error_message": "Overall error: " + str(e)}
+            yield f"data: {json.dumps({'type': 'error', 'data': overall_error_data})}\n\n"
     
     return Response(generate(), mimetype='text/event-stream')
 
@@ -249,9 +294,13 @@ def test_subset():
             try:
                 # Test the model
                 result = client.send_math_problem(model_id, current_problem)
+
+                # Log before evaluation
+                response_text_snippet_subset = result.get('response_text', '')[:100]
+                app.logger.debug(f"Calling client.evaluate_response in test_subset for model {model_name}. Expected answer: '{current_correct_answer}'. Model response (first 100 chars): '{response_text_snippet_subset}'")
                 
                 # Evaluate the response
-                is_correct, found_answer = client.evaluate_response(result.get("response_text", ""), problem_type="xy")
+                is_correct, found_answer = client.evaluate_response(result.get("response_text", ""), current_correct_answer)
                 
                 # Calculate score
                 score = calculate_score(is_correct, result.get("response_time_seconds", 0), result.get("total_tokens", 0))
@@ -283,7 +332,8 @@ def test_subset():
                     "prompt_tokens": result["prompt_tokens"],
                     "completion_tokens": result["completion_tokens"],
                     "total_tokens": result.get("total_tokens", 0),
-                    "score": score
+                        "score": score,
+                        "expected_answer": current_correct_answer
                 }
                 database.save_result(result_to_save)
                 
@@ -348,16 +398,27 @@ def calculate_score(is_correct, response_time, total_tokens):
 
 @app.route('/api/problem', methods=['POST'])
 def update_problem():
-    """Update the current math problem."""
-    global current_problem
+    """Update the current math problem and its correct answer."""
+    global current_problem, current_correct_answer
     data = request.json
-    new_problem = data.get('problem_text')
+    new_problem_text = data.get('problem_text')
+    new_correct_answer = data.get('correct_answer')
+
+    if not new_problem_text or not new_correct_answer:
+        return jsonify({"error": "Both problem_text and correct_answer are required"}), 400
     
-    if not new_problem:
-        return jsonify({"error": "problem_text is required"}), 400
+    # Save to database
+    database.save_global_problem(new_problem_text, new_correct_answer)
     
-    current_problem = new_problem
-    return jsonify({"message": "Problem updated successfully", "current_problem": current_problem})
+    # Update global variables
+    current_problem = new_problem_text
+    current_correct_answer = new_correct_answer
+
+    return jsonify({
+        "message": "Problem and answer updated successfully",
+        "current_problem": current_problem,
+        "current_correct_answer": current_correct_answer
+    })
 
 @app.route('/api/results')
 def get_results():
