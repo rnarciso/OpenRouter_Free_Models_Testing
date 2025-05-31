@@ -281,8 +281,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Modal Functions ---
     function openModal(responseText) {
-        // Render markdown to HTML
-        const html = marked.parse(responseText);
+    // Pre-process to convert custom math delimiters to standard LaTeX delimiters
+    let processedText = responseText;
+
+    // For (...)
+    processedText = processedText.replace(/\(\s*((?:\.|[^)
+]*=)[^)
+]*?)\s*\)/g, '\\($1\\)');
+
+    // For [...]
+    processedText = processedText.replace(/\[\s*((?:\.|[^\]
+]*=)[^\]
+]*?)\s*\]/g, '\\[$1\\]');
+
+    // Render markdown to HTML using marked.js
+    const html = marked.parse(processedText);
         modalResponseText.innerHTML = html;
         responseModal.style.display = 'block';
     }
