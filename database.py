@@ -13,9 +13,8 @@ DB_PORT = "5432"
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 def init_db():
-    conn = None  # Initialize conn to None
-    c = None # Initialize cursor to None
-    try:
+    with psycopg2.connect(DATABASE_URL) as conn:
+        with conn.cursor() as c:
         conn = psycopg2.connect(DATABASE_URL)
         c = conn.cursor()
 
