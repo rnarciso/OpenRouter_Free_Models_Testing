@@ -8,4 +8,4 @@
 *.log
 *.pyc
 flask_pid.txt
-flask_output.log
+
