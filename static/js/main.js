@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load models when the page loads
     loadModels();
+    loadInitialResults(); // Load existing results
 
     // Event listeners
     testSingleModelBtn.addEventListener('click', testSelectedModel);
@@ -384,5 +385,48 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to hide the progress indicator
     function hideProgress() {
         progressContainer.classList.add('hidden');
+    }
+
+    // Function to load initial results from the database
+    async function loadInitialResults() {
+        showLoading();
+        try {
+            const response = await fetch('/api/results');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const results = await response.json();
+
+            if (results && results.length > 0) {
+                results.forEach(result => {
+                    // Transform the result object to match what addResultToTable expects
+                    const transformedResult = {
+                        model_name: result.model_name,
+                        correct: result.is_correct, // Map is_correct from DB to correct
+                        response_time: result.response_time,
+                        token_usage: { // Create token_usage object
+                            prompt: result.prompt_tokens,
+                            completion: result.completion_tokens
+                        },
+                        answer: result.answer_found, // Map answer_found from DB to answer
+                        score: result.score,
+                        response_text: result.response_text,
+                        timestamp: result.timestamp // Pass timestamp if available
+                    };
+                    addResultToTable(transformedResult);
+                });
+                noResultsMessage.style.display = 'none';
+                sortResultsByScore(); // Sort results after loading
+            } else {
+                noResultsMessage.style.display = 'block'; // Ensure it's visible if no results
+            }
+        } catch (error) {
+            console.error('Error loading initial results:', error);
+            // Optionally, display a user-friendly error message on the page
+            // For example: document.getElementById('error-message-area').textContent = 'Could not load previous results.';
+            noResultsMessage.style.display = 'block'; // Ensure it's visible on error
+        } finally {
+            hideLoading();
+        }
     }
 });
