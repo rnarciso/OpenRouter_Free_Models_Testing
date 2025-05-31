@@ -2,11 +2,11 @@ import psycopg2
 import os
 from datetime import datetime
 
-# PostgreSQL connection parameters
-DB_NAME = "testdb"
-DB_USER = "testuser"
-DB_PASSWORD = "testpassword"
-DB_HOST = "db.example.com"  # Placeholder, won't actually connect
+# Parâmetros de conexão PostgreSQL
+DB_NAME = os.environ.get("DB_NAME", "testdb")
+DB_USER = os.environ.get("DB_USER", "testuser")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "testpassword")
+DB_HOST = "db.example.com"  # Placeholder, não conectará de fato
 DB_PORT = "5432"
 
 # Construct a DSN (Data Source Name)
