@@ -477,3 +477,60 @@ footer {
         padding: 8px;
     }
 }
+/* Progress controls */
+.progress-container {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress-bar-container {
+    height: 20px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #007bff;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.progress-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+#pause-test, #cancel-test {
+    padding: 5px 10px;
+    font-size: 14px;
+}
+/* Boxed answer styling */
+.boxed-answer {
+    display: block;
+    padding: 10px;
+    border: 1px solid #000;
+    border-radius: 4px;
+    background-color: #f8f8f8;
+    margin: 10px auto;
+    text-align: center;
+    max-width: fit-content;
+    clear: both; /* Ensure it clears floats */
+}
+
+/* Ensure KaTeX display math is centered */
+.katex-display {
+    text-align: center;
+}

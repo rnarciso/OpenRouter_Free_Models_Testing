@@ -20,16 +20,28 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="progress-bar-container">
             <div class="progress-bar" id="progress-bar"></div>
         </div>
-        <p id="progress-text">Testing models: 0/0</p>
+        <div class="progress-stats">
+            <p id="progress-text">Testing models: 0/0</p>
+            <p id="time-text">Elapsed: 0s | Remaining: 0s</p>
+        </div>
         <p id="current-model-text">Currently testing: None</p>
+        <div class="progress-controls">
+            <button id="pause-test" class="btn secondary">Pause</button>
+            <button id="cancel-test" class="btn danger">Cancel</button>
+        </div>
     `;
     document.getElementById('loading-indicator').after(progressContainer);
 
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
+    const timeText = document.getElementById('time-text');
     const currentModelText = document.getElementById('current-model-text');
+    const pauseTestBtn = document.getElementById('pause-test');
+    const cancelTestBtn = document.getElementById('cancel-test');
 
     let sortState = { column: 'score', direction: 'desc' }; // Initial sort state
+    let eventSource = null;
+    let isPaused = false;
 
     // Load models when the page loads
     loadModels();
@@ -185,7 +197,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const eventSource = new EventSource('/api/test-all');
         let totalModelsToTest = 0; // Variable to store total models
 
+        // Add event listeners for pause and cancel buttons
+        pauseTestBtn.addEventListener('click', togglePauseTest);
+        cancelTestBtn.addEventListener('click', cancelTest);
+    
         eventSource.onmessage = function(event) {
+            if (isPaused) return;
+            
             const parsedData = JSON.parse(event.data);
 
             if (parsedData.type === 'total') {
@@ -198,8 +216,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const progressData = parsedData.data;
                 const percent = (progressData.current_model_count / progressData.total_models) * 100;
                 progressBar.style.width = percent + '%';
-                progressText.textContent = `Testing models: ${progressData.current_model_count}/${progressData.total_models}`;
-                currentModelText.textContent = `Currently testing: ${progressData.testing_model_name}`;
+                progressText.textContent = `Completed: ${progressData.current_model_count}/${progressData.total_models}`;
+                timeText.textContent = `Elapsed: ${progressData.elapsed_time}s | Remaining: ${progressData.estimated_remaining}s`;
+                currentModelText.textContent = `Last completed: ${progressData.testing_model_name}`;
 
             } else if (parsedData.type === 'result') {
                 addResultToTable(parsedData.data);
@@ -222,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (parsedData.type === 'complete') {
                 console.log('SSE Stream complete:', parsedData.data.message);
                 eventSource.close();
-                // hideLoading(); // hideProgress generally handles this or loading is already hidden.
+                hideLoading(); // Ensure loading indicator is hidden
                 hideProgress();
                 testSingleModelBtn.disabled = false;
                 testAllModelsBtn.disabled = false;
@@ -234,13 +253,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         eventSource.onerror = function(error) {
             console.error('EventSource failed:', error);
-            eventSource.close();
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
             hideLoading();
             hideProgress();
             testSingleModelBtn.disabled = false;
             testAllModelsBtn.disabled = false;
             alert('Failed to test all models due to a connection error or server issue. Please try again later.');
         };
+        
+        // Store the eventSource in a variable we can access
+        window.currentEventSource = eventSource;
     }
 
     // Function to test a subset of models (for quicker testing)
@@ -281,21 +306,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Modal Functions ---
     function openModal(responseText) {
-    // Pre-process to convert custom math delimiters to standard LaTeX delimiters
-    let processedText = responseText;
+        // Pre-process the responseText to clean up escape characters
+        let cleanedText = responseText;
 
-    // Replace ( \latex... ) with \( \latex... \) for inline math
-    // This regex looks for an opening parenthesis, followed by optional space, a backslash (start of LaTeX),
-    // then any characters (non-greedy), and finally optional space and closing parenthesis.
-    processedText = processedText.replace(/\(\s*(\\[^)]+)\s*\)/g, '\\($1\\)');
+        // Replace escaped newlines and quotes
+        cleanedText = cleanedText.replace(/\\n/g, '\n');
+        cleanedText = cleanedText.replace(/\\"/g, '"');
 
-    // Replace [ \latex... ] with \[ \latex... \] for display math
-    // Similar logic for square brackets.
-    processedText = processedText.replace(/\[\s*(\\[^\]]+)\s*\]/g, '\\[$1\\]');
-
-    // Render markdown to HTML using marked.js
-    const html = marked.parse(processedText);
+        // Render markdown to HTML using marked.js
+        const html = marked.parse(cleanedText);
         modalResponseText.innerHTML = html;
+        
+        // Render math equations with KaTeX
+        if (typeof renderMathInElement !== 'undefined') {
+            renderMathInElement(modalResponseText, {
+                // Configure delimiters for both inline and display math
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},   // Block math
+                    {left: '[', right: ']', display: true}, // Block math
+                    {left: '$', right: '$', display: false},     // Inline math
+                    {left: '(', right: ')', display: false}  // Inline math
+                ],
+                throwOnError: false,
+                // Define the \boxed macro to output a custom HTML element
+                macros: {
+                    "\\boxed": "<span class='boxed-answer'>#1</span>"
+                }
+            });
+        } else {
+            console.error('KaTeX auto-render is not loaded');
+        }
+        
         responseModal.style.display = 'block';
     }
 
@@ -433,8 +474,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Function to hide the progress indicator
+    function togglePauseTest() {
+        isPaused = !isPaused;
+        pauseTestBtn.textContent = isPaused ? 'Resume' : 'Pause';
+        if (isPaused) {
+            currentModelText.textContent += ' (Paused)';
+        } else {
+            currentModelText.textContent = currentModelText.textContent.replace(' (Paused)', '');
+        }
+    }
+    
+    function cancelTest() {
+        if (window.currentEventSource) {
+            window.currentEventSource.close();
+            window.currentEventSource = null;
+        }
+        hideProgress();
+        testSingleModelBtn.disabled = false;
+        testAllModelsBtn.disabled = false;
+        currentModelText.textContent = 'Test canceled by user';
+    }
+    
     function hideProgress() {
         progressContainer.classList.add('hidden');
+        isPaused = false;
+        pauseTestBtn.textContent = 'Pause';
     }
 
     // Function to load initial results from the database

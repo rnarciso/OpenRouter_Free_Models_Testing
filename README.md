@@ -84,7 +84,48 @@ The OpenRouter Model Testing System is a web application designed to evaluate an
    $env:OPENROUTER_API_KEY="your-api-key-here"
    ```
 
-4. **Start the application**
+4. **Configure database connection (if needed)**
+   The application uses PostgreSQL and defaults to:
+   - Host: `localhost`
+   - Port: `5432`
+   - Database: `testdb`
+   - User: `testuser`
+   - Password: `testpassword`
+
+   To customize, set these environment variables:
+   ```bash
+   # Linux/macOS
+   export DB_HOST="your-host"
+   export DB_PORT="your-port"
+   export DB_NAME="your-dbname"
+   export DB_USER="your-user"
+   export DB_PASSWORD="your-password"
+   
+   # Windows (PowerShell)
+   $env:DB_HOST="your-host"
+   $env:DB_PORT="your-port"
+   $env:DB_NAME="your-dbname"
+   $env:DB_USER="your-user"
+   $env:DB_PASSWORD="your-password"
+   ```
+
+5. **Configure LangSmith tracing (for test environment)**
+   To enable LangSmith tracing in test environment, set these variables:
+   ```bash
+   # Linux/macOS
+   export LANGSMITH_TRACING="true"
+   export LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
+   export LANGSMITH_API_KEY="your-langsmith-api-key"
+   export LANGSMITH_PROJECT="your-langsmith-project"
+   
+   # Windows (PowerShell)
+   $env:LANGSMITH_TRACING="true"
+   $env:LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
+   $env:LANGSMITH_API_KEY="your-langsmith-api-key"
+   $env:LANGSMITH_PROJECT="your-langsmith-project"
+   ```
+
+6. **Start the application**
    ```bash
    ./start_app.sh
    ```
@@ -291,6 +332,13 @@ openrouter-model-testing/
 5. **Application Won't Start**
    - **Symptom**: Error when running start_app.sh
    - **Solution**: Check flask_output.log for details. Ensure Python and required packages are installed.
+
+5. **Database Connection Error**
+   - **Symptom**: "could not translate host name ..." or other database errors
+   - **Solution**:
+       - Ensure PostgreSQL is running
+       - Check your database configuration (see step 4 above)
+       - Verify the database credentials and network access
 
 ## Contributing
 

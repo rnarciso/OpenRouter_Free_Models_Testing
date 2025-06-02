@@ -21,6 +21,12 @@ class OpenRouterClient:
         self.models_cache = None
         self.models_cache_time = None
         self.cache_duration = timedelta(minutes=30)  # Cache models for 30 minutes
+        
+        # Models that require completion-style requests
+        self.completion_style_models = {
+            "meta-llama/llama-4-scout:free",
+            # Add other models that require this format here
+        }
     
     def get_models(self):
         """Get all available models from OpenRouter"""
@@ -63,46 +69,142 @@ class OpenRouterClient:
         
         return free_models
     
+    def add_completion_style_model(self, model_id):
+        """Manually add a model to the completion-style models list"""
+        self.completion_style_models.add(model_id)
+        print(f"Added {model_id} to completion-style models list")
+    
+    def remove_completion_style_model(self, model_id):
+        """Remove a model from the completion-style models list"""
+        self.completion_style_models.discard(model_id)
+        print(f"Removed {model_id} from completion-style models list")
+    
+    def get_completion_style_models(self):
+        """Get the current list of models that use completion-style requests"""
+        return list(self.completion_style_models)
+    
+    def _create_completion_style_payload(self, model_id, problem_text):
+        """Create payload for models that require completion-style requests"""
+        return {
+            "model": model_id,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"You are a helpful math assistant. Solve the given problem step by step and provide the final answer clearly.\n\n{problem_text}"
+                        }
+                    ]
+                }
+            ]
+        }
+    
+    def _create_standard_payload(self, model_id, problem_text):
+        """Create standard chat completion payload"""
+        return {
+            "model": model_id,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a helpful math assistant. Solve the given problem step by step and provide the final answer clearly."
+                },
+                {
+                    "role": "user",
+                    "content": problem_text
+                }
+            ]
+        }
+    
+    def _make_request(self, payload, use_completion_headers=False):
+        """Make the actual API request with appropriate headers"""
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        if use_completion_headers:
+            headers.update({
+                "HTTP-Referer": "https://localhost:5002",
+                "X-Title": "OpenRouter Test System"
+            })
+        
+        return requests.post(
+            f"{self.base_url}/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=60
+        )
+    
     def send_math_problem(self, model_id, problem_text):
         """Send a math problem to a specific model and return the response"""
         try:
-            print(f"Attempting to send problem to model: {model_id}", flush=True) # Log start with flush
+            print(f"Attempting to send problem to model: {model_id}", flush=True)
             start_time = time.time()
             
-            response = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": model_id,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "You are a helpful math assistant. Solve the given problem step by step and provide the final answer clearly."
-                        },
-                        {
-                            "role": "user",
-                            "content": problem_text
-                        }
-                    ]
-                },
-                timeout=60  # Add a timeout to prevent hanging requests
-            )
+            # Check if this model requires completion-style requests
+            if model_id in self.completion_style_models:
+                print(f"Using completion-style request for model: {model_id}", flush=True)
+                payload = self._create_completion_style_payload(model_id, problem_text)
+                print(f"Completion-style payload: {json.dumps(payload, indent=2)}", flush=True)
+                
+                try:
+                    response = self._make_request(payload, use_completion_headers=True)
+                    response.raise_for_status()
+                    print("Completion-style request successful", flush=True)
+                except requests.exceptions.RequestException as e:
+                    print(f"Completion-style request failed: {str(e)}. Trying standard format as fallback", flush=True)
+                    # Fallback to standard format
+                    payload = self._create_standard_payload(model_id, problem_text)
+                    response = self._make_request(payload, use_completion_headers=False)
+                    response.raise_for_status()
+                    print("Standard fallback request successful", flush=True)
+            else:
+                # Use standard format first for other models
+                print(f"Using standard request for model: {model_id}", flush=True)
+                payload = self._create_standard_payload(model_id, problem_text)
+                print(f"Standard payload: {json.dumps(payload, indent=2)}", flush=True)
+                
+                try:
+                    response = self._make_request(payload, use_completion_headers=False)
+                    response.raise_for_status()
+                    print("Standard request successful", flush=True)
+                except requests.exceptions.RequestException as e:
+                    print(f"Standard request failed: {str(e)}. Trying completion-style format as fallback", flush=True)
+                    # Fallback to completion-style format
+                    payload = self._create_completion_style_payload(model_id, problem_text)
+                    response = self._make_request(payload, use_completion_headers=True)
+                    response.raise_for_status()
+                    print("Completion-style fallback request successful", flush=True)
+                    # Add this model to the completion-style models set for future requests
+                    self.completion_style_models.add(model_id)
+                    print(f"Added {model_id} to completion-style models list", flush=True)
             
-            print(f"Received response status code: {response.status_code} for model: {model_id}", flush=True) # Log status code with flush
+            print(f"Received response status code: {response.status_code} for model: {model_id}", flush=True)
             if not response.ok:
-                 print(f"Error Response Text: {response.text}", flush=True) # Log error text if status not OK with flush
-            response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+                 print(f"Error Response Text: {response.text}", flush=True)
             response_data = response.json()
-            print(f"Successfully received and parsed JSON response for model: {model_id}", flush=True) # Log success with flush
+            print(f"Successfully received and parsed JSON response for model: {model_id}", flush=True)
             print(f"Raw response data for model {model_id}: {json.dumps(response_data, indent=2)}", flush=True)
             end_time = time.time()
             response_time = end_time - start_time
             
             # Extract the response text and token usage
-            response_text = response_data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            message = response_data.get("choices", [{}])[0].get("message", {})
+            response_text = message.get("content", "")
+            
+            # Handle cases where content is empty but refusal/reasoning exists
+            if not response_text.strip():
+                refusal = message.get("refusal")
+                reasoning = message.get("reasoning")
+                
+                if refusal:
+                    response_text = f"[Refusal] {refusal}"
+                elif reasoning:
+                    response_text = f"[Reasoning] {reasoning}"
+                else:
+                    response_text = "[Empty response]"
+            
             usage = response_data.get("usage", {})
             prompt_tokens = usage.get("prompt_tokens", 0)
             completion_tokens = usage.get("completion_tokens", 0)

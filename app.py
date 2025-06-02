@@ -15,6 +15,17 @@ from flask import Flask, render_template, jsonify, request, Response
 from openrouter_client import OpenRouterClient
 import database  # Import the database module
 
+# Conditional LangSmith tracing for test environment
+if os.environ.get("LANGSMITH_TRACING", "").lower() == "true":
+    # Set LANGCHAIN_PROJECT environment variable if LANGSMITH_PROJECT is set
+    if os.environ.get("LANGSMITH_PROJECT"):
+        os.environ["LANGCHAIN_PROJECT"] = os.environ["LANGSMITH_PROJECT"]
+    
+    from langsmith.run_helpers import trace
+    print("LangSmith tracing enabled (using run_helpers)")
+else:
+    print("LangSmith tracing disabled")
+
 # Initialize Flask app
 app = Flask(__name__)
 
@@ -111,13 +122,22 @@ def test_model():
             return jsonify({"error": "Model ID is required"}), 400
         
         # Get model details to fetch the name
-        all_models = client.get_models() # Use cached if available
+        all_models = client.get_free_models() # Use cached if available
         model_details = next((m for m in all_models if m.get("id") == model_id), None)
         model_name = model_details.get("name", model_id) if model_details else model_id # Use ID if name not found
 
-        # Send the math problem to the model
-        result = client.send_math_problem(model_id, current_problem)
-        # app.logger.debug(f"DEBUG: Result from send_math_problem for {model_id}: {result}") # Replaced by more specific log below
+        # Add logging for llama-4-scout model
+        if model_id == "meta-llama/llama-4-scout:free":
+            app.logger.info(f"Testing meta-llama/llama-4-scout:free with fallback logic")
+        
+        # Send the math problem to the model with optional tracing
+        if os.environ.get("LANGSMITH_TRACING", "").lower() == "true":
+            with trace("test_model") as run:
+                run.inputs = {"model_id": model_id, "problem": current_problem}
+                result = client.send_math_problem(model_id, current_problem)
+                run.outputs = {"response": result.get('response_text', '')[:100]}
+        else:
+            result = client.send_math_problem(model_id, current_problem)
 
         # Log before evaluation
         response_text_snippet = result.get('response_text', '')[:100]
@@ -163,12 +183,100 @@ def test_model():
         
         return jsonify(response)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        error_trace = traceback.format_exc()
+        app.logger.error(f"Error testing model: {error_trace}")
+        return jsonify({"error": str(e), "details": error_trace}), 500
+
+import concurrent.futures
+import threading
+
+# Create a lock for database writes
+db_write_lock = threading.Lock()
+
+def test_single_model(model, problem, correct_answer):
+    model_id = model.get("id")
+    model_name = model.get("name", "Unknown Model")
+    try:
+        # Test the model with optional tracing
+        if os.environ.get("LANGSMITH_TRACING", "").lower() == "true":
+            with trace("test_all_models") as run:
+                run.inputs = {"model_id": model_id, "problem": problem}
+                result = client.send_math_problem(model_id, problem)
+                run.outputs = {"response": result.get('response_text', '')[:100]}
+        else:
+            result = client.send_math_problem(model_id, problem)
+
+        # Check for errors from client.send_math_problem (e.g. timeout, network error)
+        if result.get("error"):
+            raise Exception(result.get("response_text", "Unknown error during model test"))
+
+        # Log before evaluation
+        response_text_snippet_all = result.get('response_text', '')[:100]
+        app.logger.debug(f"Calling client.evaluate_response in test_all_models for model {model_name}. Expected answer: '{correct_answer}'. Model response (first 100 chars): '{response_text_snippet_all}'")
+
+        # Evaluate the response
+        is_correct, found_answer = client.evaluate_response(result.get("response_text", ""), correct_answer)
+        
+        # Calculate score
+        score = calculate_score(is_correct, result.get("response_time_seconds", 0), result.get("total_tokens", 0))
+        
+        # Format the result
+        test_result = {
+            "model_id": model_id,
+            "model_name": model_name,
+            "correct": is_correct,
+            "response_time": round(result["response_time_seconds"], 2),
+            "token_usage": {
+                "prompt": result["prompt_tokens"],
+                "completion": result["completion_tokens"],
+                "total": result.get("total_tokens", 0)
+            },
+            "answer": found_answer if is_correct else "Incorrect",
+            "score": score,
+            "response_text": result.get("response_text", "")
+        }
+        
+        # Save the result to the database with thread safety
+        result_to_save = {
+            "model_id": model_id,
+            "model_name": model_name,
+            "prompt": problem,
+            "response_text": result.get("response_text", ""),
+            "is_correct": is_correct,
+            "answer_found": found_answer if is_correct else "Incorrect",
+            "response_time": result["response_time_seconds"],
+            "prompt_tokens": result["prompt_tokens"],
+            "completion_tokens": result["completion_tokens"],
+            "total_tokens": result.get("total_tokens", 0),
+            "score": score,
+            "expected_answer": correct_answer
+        }
+        
+        with db_write_lock:
+            database.save_result(result_to_save)
+
+        return {
+            "type": "result",
+            "data": test_result
+        }
+
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        app.logger.error(f"Error testing model {model_name}: {error_trace}")
+        return {
+            "type": "error",
+            "data": {
+                "model_name": model_name,
+                "error_message": str(e)
+            }
+        }
 
 @app.route('/api/test-all')
 def test_all_models():
     """
-    Test all available free models and stream the results.
+    Test all available free models in parallel and stream the results.
     
     Returns:
         Stream: Server-sent events with test results for each model.
@@ -178,94 +286,59 @@ def test_all_models():
             # Get free models
             free_models = client.get_free_models()
             
-            # Limit to first 5 models to prevent timeouts
-            models_to_test = free_models[:5] # For actual testing, consider removing or increasing this limit
+            # Test all free models
+            models_to_test = free_models
             total_models = len(models_to_test)
+            start_time = time.time()
             
             # Send the total number of models to test
             yield f"data: {json.dumps({'type': 'total', 'data': {'total_models': total_models}})}\n\n"
             
-            # Test each model
-            for i, model in enumerate(models_to_test):
-                model_id = model.get("id")
-                model_name = model.get("name", "Unknown Model")
+            # If there are no models, send completion immediately
+            if total_models == 0:
+                yield f"data: {json.dumps({'type': 'complete', 'data': {'message': 'No models to test'}})}\n\n"
+                return
+
+            # Use thread pool for parallel execution
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                # Submit all models for testing
+                future_to_model = {executor.submit(test_single_model, model, current_problem, current_correct_answer): model for model in models_to_test}
                 
-                try:
+                completed = 0
+                # Process results as they complete
+                for future in concurrent.futures.as_completed(future_to_model):
+                    completed += 1
+                    model = future_to_model[future]
+                    
+                    # Calculate progress
+                    elapsed_time = time.time() - start_time
+                    avg_time = elapsed_time / completed
+                    remaining_models = total_models - completed
+                    estimated_remaining = avg_time * remaining_models
+                    
                     # Send progress update
                     progress_data = {
-                        "current_model_count": i + 1,
+                        "current_model_count": completed,
                         "total_models": total_models,
-                        "testing_model_name": model_name
+                        "testing_model_name": model.get("name", "Unknown Model"),
+                        "elapsed_time": round(elapsed_time, 1),
+                        "estimated_remaining": round(estimated_remaining, 1)
                     }
                     yield f"data: {json.dumps({'type': 'progress', 'data': progress_data})}\n\n"
                     
-                    # Test the model
-                    result = client.send_math_problem(model_id, current_problem)
-                    
-                    # Check for errors from client.send_math_problem (e.g. timeout, network error)
-                    if result.get("error"):
-                        raise Exception(result.get("response_text", "Unknown error during model test"))
-
-                    # Log before evaluation
-                    response_text_snippet_all = result.get('response_text', '')[:100]
-                    app.logger.debug(f"Calling client.evaluate_response in test_all_models for model {model_name}. Expected answer: '{current_correct_answer}'. Model response (first 100 chars): '{response_text_snippet_all}'")
-
-                    # Evaluate the response
-                    is_correct, found_answer = client.evaluate_response(result.get("response_text", ""), current_correct_answer)
-                    
-                    # Calculate score
-                    score = calculate_score(is_correct, result.get("response_time_seconds", 0), result.get("total_tokens", 0))
-                    
-                    # Format the result
-                    test_result = {
-                        "model_id": model_id,
-                        "model_name": model_name,
-                        "correct": is_correct,
-                        "response_time": round(result["response_time_seconds"], 2),
-                        "token_usage": {
-                            "prompt": result["prompt_tokens"],
-                            "completion": result["completion_tokens"],
-                            "total": result.get("total_tokens", 0)
-                        },
-                        "answer": found_answer if is_correct else "Incorrect",
-                        "score": score
-                    }
-                    
-                    # Send the result
-                    # Save the result to the database
-                    result_to_save = {
-                        "model_id": model_id,
-                        "model_name": model_name,
-                        "prompt": current_problem,
-                        "response_text": result.get("response_text", ""),
-                        "is_correct": is_correct,
-                        "answer_found": found_answer if is_correct else "Incorrect",
-                        "response_time": result["response_time_seconds"],
-                        "prompt_tokens": result["prompt_tokens"],
-                        "completion_tokens": result["completion_tokens"],
-                        "total_tokens": result.get("total_tokens", 0),
-                        "score": score,
-                        "expected_answer": current_correct_answer
-                    }
-                    database.save_result(result_to_save)
-                    
-                    # Send the result to the client
-                    yield f"data: {json.dumps({'type': 'result', 'data': test_result})}\n\n"
-                    
-                except Exception as e:
-                    # Send error for this model
-                    error_data = {
-                        "model_name": model_name,
-                        "error_message": str(e)
-                    }
-                    yield f"data: {json.dumps({'type': 'error', 'data': error_data})}\n\n"
-            
-            # Send completion message
-            completion_data = {"message": "All models tested successfully."}
-            yield f"data: {json.dumps({'type': 'complete', 'data': completion_data})}\n\n"
+                    # Get and send the result
+                    result = future.result()
+                    yield f"data: {json.dumps(result)}\n\n"
+                
+                # Send completion message
+                completion_data = {"message": "All models tested successfully."}
+                yield f"data: {json.dumps({'type': 'complete', 'data': completion_data})}\n\n"
             
         except Exception as e:
             # Send overall error
+            import traceback
+            error_trace = traceback.format_exc()
+            app.logger.error(f"Overall error in test_all_models: {error_trace}")
             overall_error_data = {"error_message": "Overall error: " + str(e)}
             yield f"data: {json.dumps({'type': 'error', 'data': overall_error_data})}\n\n"
     
@@ -292,8 +365,14 @@ def test_subset():
             model_name = model.get("name", "Unknown Model")
             
             try:
-                # Test the model
-                result = client.send_math_problem(model_id, current_problem)
+                # Test the model with optional tracing
+                if os.environ.get("LANGSMITH_TRACING", "").lower() == "true":
+                    with trace("test_subset") as run:
+                        run.inputs = {"model_id": model_id, "problem": current_problem}
+                        result = client.send_math_problem(model_id, current_problem)
+                        run.outputs = {"response": result.get('response_text', '')[:100]}
+                else:
+                    result = client.send_math_problem(model_id, current_problem)
 
                 # Log before evaluation
                 response_text_snippet_subset = result.get('response_text', '')[:100]
@@ -432,5 +511,6 @@ def get_results():
         return jsonify({"error": "An error occurred while fetching results."}), 500
 
 if __name__ == '__main__':
+    # Run the Flask app
     # Run the Flask app
     app.run(debug=True, host='0.0.0.0', port=5002)
